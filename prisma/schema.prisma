@@ -1,0 +1,52 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Calendar {
+  id          String    @id @default(cuid())
+  username    String    @unique
+  displayName String
+  phoneE164   String
+  timezone    String
+  dayStart    String
+  dayEnd      String
+  openDates   String[]
+  editKeyHash String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  items       Item[]
+  bookings    Booking[]
+}
+
+model Item {
+  id               String    @id @default(cuid())
+  calendarId       String
+  name             String
+  durationMinutes  Int
+  dates            String[]
+  calendar         Calendar  @relation(fields: [calendarId], references: [id], onDelete: Cascade)
+  bookings         Booking[]
+
+  @@index([calendarId])
+}
+
+model Booking {
+  id         String   @id @default(cuid())
+  calendarId String
+  itemId     String
+  startsAt   DateTime
+  endsAt     DateTime
+  guestName  String
+  guestPhone String
+  createdAt  DateTime @default(now())
+  calendar   Calendar @relation(fields: [calendarId], references: [id], onDelete: Cascade)
+  item       Item     @relation(fields: [itemId], references: [id], onDelete: Restrict)
+
+  @@unique([calendarId, startsAt])
+  @@index([calendarId, startsAt])
+}

@@ -1,0 +1,64 @@
+@import "tailwindcss";
+
+:root {
+  --paper: #efe8d8;
+  --ink: #1b1712;
+  --muted: #6d655a;
+  --rule: #cfc4b0;
+  --open: #1e4f94;
+  --open-ink: #f4f7fb;
+  --closed: #fffdf8;
+  --chip: #d9e6f6;
+  --brass: #7a6230;
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-rule: var(--rule);
+  --color-open: var(--open);
+  --color-open-ink: var(--open-ink);
+  --color-closed: var(--closed);
+  --color-chip: var(--chip);
+  --color-brass: var(--brass);
+  --font-display: var(--font-display);
+  --font-sans: var(--font-body);
+  --font-mono: var(--font-mono);
+}
+
+html,
+body {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+body {
+  font-family: var(--font-body), "Source Serif 4", serif;
+  min-height: 100%;
+}
+
+h1,
+h2,
+h3,
+.font-display {
+  font-family: var(--font-display), Syne, sans-serif;
+}
+
+::selection {
+  background: var(--chip);
+}
+
+:focus-visible {
+  outline: 2px solid var(--open);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
