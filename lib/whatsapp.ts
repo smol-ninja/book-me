@@ -23,7 +23,11 @@ function createTwilioClient() {
 
 async function sendWhatsApp(
   to: string,
-  body: string,
+  input: {
+    body: string;
+    contentSid?: string;
+    contentVariables?: Record<string, string>;
+  },
 ): Promise<{ sent: boolean; error?: string }> {
   const from = process.env.TWILIO_WHATSAPP_FROM;
   const client = createTwilioClient();
@@ -32,11 +36,21 @@ async function sendWhatsApp(
   }
 
   try {
-    await client.messages.create({
-      from,
-      to: whatsappAddress(to),
-      body,
-    });
+    const contentSid = input.contentSid?.trim();
+    await client.messages.create(
+      contentSid
+        ? {
+            from,
+            to: whatsappAddress(to),
+            contentSid,
+            contentVariables: JSON.stringify(input.contentVariables ?? {}),
+          }
+        : {
+            from,
+            to: whatsappAddress(to),
+            body: input.body,
+          },
+    );
     return { sent: true };
   } catch (error) {
     console.error("Twilio WhatsApp send failed", error);
@@ -66,10 +80,15 @@ export async function notifyCalendarCreated(input: {
   publicUrl: string;
   editUrl: string;
 }): Promise<{ sent: boolean; error?: string }> {
-  return sendWhatsApp(
-    input.creatorPhone,
-    calendarCreatedWhatsAppBody(input),
-  );
+  return sendWhatsApp(input.creatorPhone, {
+    body: calendarCreatedWhatsAppBody(input),
+    contentSid: process.env.TWILIO_WHATSAPP_CONTENT_SID_CALENDAR,
+    contentVariables: {
+      "1": input.username,
+      "2": input.publicUrl,
+      "3": input.editUrl,
+    },
+  });
 }
 
 export async function notifyBooking(input: {
@@ -85,9 +104,10 @@ export async function notifyBooking(input: {
   username: string;
 }): Promise<{ sent: boolean; error?: string }> {
   const when = formatRange(input.startsAt, input.endsAt, input.timezone);
+  const item = `${input.itemName} (${input.durationMinutes} min)`;
   const guestBody = [
     "You're booked.",
-    `Item: ${input.itemName} (${input.durationMinutes} min)`,
+    `Item: ${item}`,
     `When: ${when}`,
     `Host: ${input.creatorName}`,
   ].join("\n");
@@ -95,13 +115,31 @@ export async function notifyBooking(input: {
     `New booking on /${input.username}`,
     `Guest: ${input.guestName}`,
     `Phone: ${input.guestPhone}`,
-    `Item: ${input.itemName} (${input.durationMinutes} min)`,
+    `Item: ${item}`,
     `When: ${when}`,
   ].join("\n");
 
   const [creator, guest] = await Promise.all([
-    sendWhatsApp(input.creatorPhone, creatorBody),
-    sendWhatsApp(input.guestPhone, guestBody),
+    sendWhatsApp(input.creatorPhone, {
+      body: creatorBody,
+      contentSid: process.env.TWILIO_WHATSAPP_CONTENT_SID_BOOKING_HOST,
+      contentVariables: {
+        "1": input.username,
+        "2": input.guestName,
+        "3": input.guestPhone,
+        "4": item,
+        "5": when,
+      },
+    }),
+    sendWhatsApp(input.guestPhone, {
+      body: guestBody,
+      contentSid: process.env.TWILIO_WHATSAPP_CONTENT_SID_BOOKING_GUEST,
+      contentVariables: {
+        "1": item,
+        "2": input.creatorName,
+        "3": when,
+      },
+    }),
   ]);
   if (creator.sent && guest.sent) {
     return { sent: true };
