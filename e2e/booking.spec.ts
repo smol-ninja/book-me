@@ -41,9 +41,14 @@ test("creator can open dates, add items, and a guest can book a buffered slot", 
   await page.getByPlaceholder("+44 7911 123456").fill("+447496888123");
   await page.getByRole("button", { name: "Save calendar" }).click();
   await expect(page.getByRole("heading", { name: `/${username} is live` })).toBeVisible();
+  const editKey = new URL(page.url()).searchParams.get("key");
+  expect(editKey).toBeTruthy();
+  await expect(page.getByRole("link", { name: "Open bookings" })).toBeVisible();
 
   await page.goto(`/${username}`);
   await expect(page.getByRole("heading", { name: username })).toBeVisible();
+  await expect(page.getByTestId("day-2026-09-10")).toHaveAttribute("data-open", "true");
+  await expect(page.getByTestId("day-2026-09-09")).toHaveAttribute("data-open", "false");
   await page.getByTestId("chip-2026-09-10-Dinner").click();
 
   const firstSlot = page.locator("[data-testid^='slot-']").first();
@@ -61,4 +66,16 @@ test("creator can open dates, add items, and a guest can book a buffered slot", 
   await page.getByTestId("chip-2026-09-10-Badminton").click();
   await expect(page.locator("[data-testid^='slot-']").first()).toBeVisible();
   await expect(page.getByTestId(`slot-${bookedLabel}`)).toHaveCount(0);
+
+  await page.goto(`/setup/${username}/bookings`);
+  await expect(page.getByTestId("bookings-denied")).toBeVisible();
+  await expect(page.getByText("Ada Lovelace")).toHaveCount(0);
+
+  await page.goto(
+    `/setup/${username}/bookings?key=${encodeURIComponent(editKey!)}`,
+  );
+  await expect(page.getByTestId("bookings-heading")).toHaveText(`/${username}`);
+  await expect(page.getByTestId("booking-date-2026-09-10")).toBeVisible();
+  await expect(page.getByText("Ada Lovelace")).toBeVisible();
+  await expect(page.getByText("Dinner")).toBeVisible();
 });

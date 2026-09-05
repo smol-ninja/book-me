@@ -53,12 +53,14 @@ describe("appOrigin", () => {
 });
 
 describe("calendarShareUrls", () => {
-  it("builds public and secret edit URLs", () => {
+  it("builds public, secret edit, and bookings URLs", () => {
     expect(
       calendarShareUrls("https://book-me-delta.vercel.app", "ada", "secret+key"),
     ).toEqual({
       publicUrl: "https://book-me-delta.vercel.app/ada",
       editUrl: "https://book-me-delta.vercel.app/setup/ada?key=secret%2Bkey",
+      bookingsUrl:
+        "https://book-me-delta.vercel.app/setup/ada/bookings?key=secret%2Bkey",
     });
   });
 });

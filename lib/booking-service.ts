@@ -1,5 +1,6 @@
 import { DateTime } from "luxon";
 import { HttpError } from "@/lib/calendar-service";
+import { editKeysMatch } from "@/lib/edit-key";
 import { toPublicCalendar } from "@/lib/mappers";
 import { toE164 } from "@/lib/phone";
 import { prisma } from "@/lib/prisma";
@@ -11,11 +12,16 @@ import { notifyBooking } from "@/lib/whatsapp";
 export async function listSlots(username: string, date: string, itemId: string) {
   const calendar = await prisma.calendar.findUnique({
     where: { username: normalizeUsername(username) },
-    include: { items: true, bookings: true },
+    include: {
+      items: {
+        where: { id: itemId },
+        select: { id: true, dates: true, durationMinutes: true },
+      },
+    },
   });
   if (!calendar) throw new HttpError("Calendar not found.", 404);
 
-  const item = calendar.items.find((row) => row.id === itemId);
+  const item = calendar.items[0];
   if (!item) throw new HttpError("Item not found.", 404);
   if (!calendar.openDates.includes(date) || !item.dates.includes(date)) {
     throw new HttpError("That item is not offered on this date.", 400);
@@ -27,10 +33,13 @@ export async function listSlots(username: string, date: string, itemId: string) 
     calendar.dayStart,
     calendar.dayEnd,
   );
-  const dayBookings = calendar.bookings.filter(
-    (booking) =>
-      booking.startsAt >= bounds.start && booking.startsAt < bounds.end,
-  );
+  const dayBookings = await prisma.booking.findMany({
+    where: {
+      calendarId: calendar.id,
+      startsAt: { gte: bounds.start, lt: bounds.end },
+    },
+    select: { startsAt: true, endsAt: true },
+  });
 
   return generateSlotStarts({
     date,
@@ -41,6 +50,111 @@ export async function listSlots(username: string, date: string, itemId: string) 
     bookings: dayBookings,
     now: new Date(),
   });
+}
+
+export type CreatorBookingRow = {
+  id: string;
+  startsAt: Date;
+  endsAt: Date;
+  guestName: string;
+  guestPhone: string;
+  itemName: string;
+};
+
+export type BookingDayGroup = {
+  date: string;
+  label: string;
+  bookings: {
+    id: string;
+    timeRange: string;
+    itemName: string;
+    guestName: string;
+    guestPhone: string;
+    upcoming: boolean;
+  }[];
+};
+
+export function groupBookingsByDate(
+  bookings: CreatorBookingRow[],
+  timezone: string,
+  now: Date = new Date(),
+): BookingDayGroup[] {
+  const groups = new Map<string, BookingDayGroup>();
+
+  for (const booking of bookings) {
+    const start = DateTime.fromJSDate(booking.startsAt, { zone: timezone });
+    const end = DateTime.fromJSDate(booking.endsAt, { zone: timezone });
+    const date = start.toISODate();
+    if (!date) continue;
+
+    let group = groups.get(date);
+    if (!group) {
+      group = {
+        date,
+        label: start.toFormat("ccc d LLL yyyy"),
+        bookings: [],
+      };
+      groups.set(date, group);
+    }
+
+    group.bookings.push({
+      id: booking.id,
+      timeRange: `${start.toFormat("HH:mm")}–${end.toFormat("HH:mm")}`,
+      itemName: booking.itemName,
+      guestName: booking.guestName,
+      guestPhone: booking.guestPhone,
+      upcoming: booking.endsAt >= now,
+    });
+  }
+
+  return [...groups.values()].sort((a, b) => a.date.localeCompare(b.date));
+}
+
+export async function getCreatorBookings(username: string, editKey: string | undefined) {
+  const calendar = await prisma.calendar.findUnique({
+    where: { username: normalizeUsername(username) },
+    select: {
+      id: true,
+      username: true,
+      displayName: true,
+      timezone: true,
+      editKeyHash: true,
+    },
+  });
+  if (!calendar) return { status: "missing" } as const;
+  if (!editKey || !editKeysMatch(editKey, calendar.editKeyHash)) {
+    return { status: "forbidden" } as const;
+  }
+
+  const rows = await prisma.booking.findMany({
+    where: { calendarId: calendar.id },
+    orderBy: { startsAt: "asc" },
+    select: {
+      id: true,
+      startsAt: true,
+      endsAt: true,
+      guestName: true,
+      guestPhone: true,
+      item: { select: { name: true } },
+    },
+  });
+
+  return {
+    status: "ok" as const,
+    calendar: {
+      username: calendar.username,
+      displayName: calendar.displayName,
+      timezone: calendar.timezone,
+    },
+    bookings: rows.map((row) => ({
+      id: row.id,
+      startsAt: row.startsAt,
+      endsAt: row.endsAt,
+      guestName: row.guestName,
+      guestPhone: row.guestPhone,
+      itemName: row.item.name,
+    })),
+  };
 }
 
 export async function createBooking(body: unknown) {

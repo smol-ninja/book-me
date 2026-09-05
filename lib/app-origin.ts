@@ -29,10 +29,12 @@ export function calendarShareUrls(
   origin: string,
   username: string,
   editKey: string,
-): { publicUrl: string; editUrl: string } {
+): { publicUrl: string; editUrl: string; bookingsUrl: string } {
   const base = origin.replace(/\/$/, "");
+  const key = encodeURIComponent(editKey);
   return {
     publicUrl: `${base}/${username}`,
-    editUrl: `${base}/setup/${username}?key=${encodeURIComponent(editKey)}`,
+    editUrl: `${base}/setup/${username}?key=${key}`,
+    bookingsUrl: `${base}/setup/${username}/bookings?key=${key}`,
   };
 }

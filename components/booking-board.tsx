@@ -1,7 +1,7 @@
 "use client";
 
 import { DateTime } from "luxon";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { MonthCalendar } from "@/components/month-calendar";
 import { formatRange, todayIso } from "@/lib/slots";
 import type { GeneratedSlot } from "@/lib/slots";
@@ -55,33 +55,37 @@ export function BookingBoard({ calendar }: BookingBoardProps) {
   const selectedItem = calendar.items.find((item) => item.id === selectedItemId);
   const sandboxHint = process.env.NEXT_PUBLIC_TWILIO_SANDBOX_HINT;
   const hasSelection = Boolean(selectedItem && selectedDate);
+  const today = todayIso(calendar.timezone);
 
-  async function selectItem(date: string, itemId: string) {
-    setSelectedDate(date);
-    setSelectedItemId(itemId);
-    setStartsAt(null);
-    setSlots([]);
-    setSlotsError(null);
-    setLoadingSlots(true);
-    try {
-      const response = await fetch(
-        `/api/calendars/${calendar.username}/slots?date=${date}&itemId=${itemId}`,
-      );
-      const data = (await response.json()) as {
-        slots?: GeneratedSlot[];
-        error?: string;
-      };
-      if (!response.ok) {
-        throw new Error(data.error ?? "Could not load times.");
-      }
-      setSlots(data.slots ?? []);
-    } catch (error: unknown) {
+  const selectItem = useCallback(
+    async (date: string, itemId: string) => {
+      setSelectedDate(date);
+      setSelectedItemId(itemId);
+      setStartsAt(null);
       setSlots([]);
-      setSlotsError(error instanceof Error ? error.message : "Could not load times.");
-    } finally {
-      setLoadingSlots(false);
-    }
-  }
+      setSlotsError(null);
+      setLoadingSlots(true);
+      try {
+        const response = await fetch(
+          `/api/calendars/${calendar.username}/slots?date=${date}&itemId=${itemId}`,
+        );
+        const data = (await response.json()) as {
+          slots?: GeneratedSlot[];
+          error?: string;
+        };
+        if (!response.ok) {
+          throw new Error(data.error ?? "Could not load times.");
+        }
+        setSlots(data.slots ?? []);
+      } catch (error: unknown) {
+        setSlots([]);
+        setSlotsError(error instanceof Error ? error.message : "Could not load times.");
+      } finally {
+        setLoadingSlots(false);
+      }
+    },
+    [calendar.username],
+  );
 
   async function book() {
     if (!selectedItemId || !startsAt) return;
@@ -143,7 +147,7 @@ export function BookingBoard({ calendar }: BookingBoardProps) {
         </p>
         <button
           type="button"
-          className="mt-8 min-h-11 cursor-pointer border-b border-open text-open"
+          className="mt-8 min-h-11 cursor-pointer border-b border-accent text-accent"
           onClick={() => {
             const date = selectedDate;
             const itemId = selectedItemId;
@@ -173,8 +177,8 @@ export function BookingBoard({ calendar }: BookingBoardProps) {
             {calendar.displayName}
           </h1>
           <p className="mt-2 text-muted">
-            Pick a blue day, then an item, then a time. Slots keep a 30-minute
-            buffer.
+            Pick a white day, then an item, then a time. Gray days with an X
+            are closed. Slots keep a 30-minute buffer.
           </p>
         </div>
         <p className="break-all font-mono text-xs text-muted">/{calendar.username}</p>
@@ -211,18 +215,17 @@ export function BookingBoard({ calendar }: BookingBoardProps) {
             itemsByDate={itemsByDate}
             selectedDate={selectedDate}
             selectedItemId={selectedItemId}
-            onSelectItem={(date, itemId) => {
-              void selectItem(date, itemId);
-            }}
+            today={today}
+            onSelectItem={selectItem}
           />
         </section>
 
         <aside
-          className={`min-w-0 border border-rule bg-closed p-4 sm:p-5 ${hasSelection ? "order-1 lg:order-none" : ""}`}
+          className={`min-w-0 border border-rule bg-open p-4 sm:p-5 ${hasSelection ? "order-1 lg:order-none" : ""}`}
         >
           {!selectedItem || !selectedDate ? (
             <p className="text-muted">
-              Choose an item on a blue day to see available times.
+              Choose an item on a white day to see available times.
             </p>
           ) : (
             <>
@@ -255,8 +258,8 @@ export function BookingBoard({ calendar }: BookingBoardProps) {
                       className={[
                         "min-h-11 cursor-pointer border px-2 py-2 font-mono text-sm",
                         startsAt === slot.startsAt
-                          ? "border-open bg-open text-open-ink"
-                          : "border-rule hover:border-open",
+                          ? "border-accent bg-accent text-accent-ink"
+                          : "border-rule hover:border-accent",
                       ].join(" ")}
                     >
                       {slot.label}
@@ -304,11 +307,11 @@ export function BookingBoard({ calendar }: BookingBoardProps) {
                       sandbox first.
                     </p>
                   )}
-                  {formError ? <p className="text-sm text-open">{formError}</p> : null}
+                  {formError ? <p className="text-sm text-accent">{formError}</p> : null}
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="min-h-12 w-full cursor-pointer bg-open px-4 py-3 font-display text-lg font-semibold text-open-ink disabled:opacity-60"
+                    className="min-h-12 w-full cursor-pointer bg-accent px-4 py-3 font-display text-lg font-semibold text-accent-ink disabled:opacity-60"
                   >
                     {submitting ? "Booking…" : "Book slot"}
                   </button>

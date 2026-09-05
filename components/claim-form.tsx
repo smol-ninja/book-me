@@ -35,16 +35,16 @@ export function ClaimForm() {
           placeholder="alex"
           autoCapitalize="none"
           autoCorrect="off"
-          className="mt-2 w-full min-w-0 border border-rule bg-closed px-3 py-3 text-base sm:text-lg"
+          className="mt-2 w-full min-w-0 border border-rule bg-open px-3 py-3 text-base sm:text-lg"
         />
       </label>
       <p className="mt-2 break-all font-mono text-sm text-muted">
         /{normalizeUsername(username) || "your-name"}
       </p>
-      {error ? <p className="mt-2 text-sm text-open">{error}</p> : null}
+      {error ? <p className="mt-2 text-sm text-accent">{error}</p> : null}
       <button
         type="submit"
-        className="mt-6 min-h-11 w-full cursor-pointer bg-open px-5 py-3 font-display text-lg font-semibold text-open-ink sm:w-auto"
+        className="mt-6 min-h-11 w-full cursor-pointer bg-accent px-5 py-3 font-display text-lg font-semibold text-accent-ink sm:w-auto"
       >
         Create calendar
       </button>

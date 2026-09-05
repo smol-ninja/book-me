@@ -5,9 +5,12 @@
   --ink: #1b1712;
   --muted: #6d655a;
   --rule: #cfc4b0;
-  --open: #1e4f94;
-  --open-ink: #f4f7fb;
-  --closed: #fffdf8;
+  --open: #fffdf8;
+  --open-ink: #1b1712;
+  --closed: #c5bdb0;
+  --closed-ink: #5c564c;
+  --accent: #1e4f94;
+  --accent-ink: #f4f7fb;
   --chip: #d9e6f6;
   --brass: #7a6230;
 }
@@ -20,6 +23,9 @@
   --color-open: var(--open);
   --color-open-ink: var(--open-ink);
   --color-closed: var(--closed);
+  --color-closed-ink: var(--closed-ink);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
   --color-chip: var(--chip);
   --color-brass: var(--brass);
   --font-display: var(--font-display);
@@ -55,7 +61,7 @@ h3,
 }
 
 :focus-visible {
-  outline: 2px solid var(--open);
+  outline: 2px solid var(--accent);
   outline-offset: 3px;
 }
 

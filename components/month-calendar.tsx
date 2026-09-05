@@ -1,7 +1,7 @@
 "use client";
 
 import { DateTime } from "luxon";
-import { useRef } from "react";
+import { memo, useCallback, useMemo, useRef } from "react";
 import { isoDateRange } from "@/lib/slots";
 
 export type CalendarChip = {
@@ -17,12 +17,14 @@ type MonthCalendarProps = {
   itemsByDate?: Map<string, CalendarChip[]>;
   selectedDate?: string | null;
   selectedItemId?: string | null;
+  today?: string | null;
   onPaintDates?: (dates: string[], selected: boolean) => void;
   onSelectItem?: (date: string, itemId: string) => void;
 };
 
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const CELL_MIN_HEIGHT = "min-h-11 min-w-0 md:min-h-[7.5rem]";
+const EMPTY_CHIPS: CalendarChip[] = [];
 
 function monthCells(year: number, month: number) {
   const first = DateTime.local(year, month, 1);
@@ -38,7 +40,131 @@ function monthCells(year: number, month: number) {
   return cells;
 }
 
-export function MonthCalendar({
+function ClosedMark() {
+  return (
+    <svg
+      viewBox="0 0 16 16"
+      className="h-3.5 w-3.5 shrink-0 text-closed-ink md:h-5 md:w-5"
+      aria-hidden="true"
+    >
+      <path
+        d="M3.5 3.5l9 9m0-9l-9 9"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="square"
+      />
+    </svg>
+  );
+}
+
+type DayCellProps = {
+  iso: string;
+  day: number;
+  open: boolean;
+  selected: boolean;
+  today: boolean;
+  mode: "setup" | "book";
+  chips: CalendarChip[];
+  selectedItemId?: string | null;
+  onPaintStart?: (iso: string, currentlyOpen: boolean, target: HTMLElement, pointerId: number) => void;
+  onPaintEnter?: (iso: string) => void;
+  onPaintEnd?: () => void;
+  onSelectItem?: (date: string, itemId: string) => void;
+};
+
+const DayCell = memo(function DayCell({
+  iso,
+  day,
+  open,
+  selected,
+  today,
+  mode,
+  chips,
+  selectedItemId,
+  onPaintStart,
+  onPaintEnter,
+  onPaintEnd,
+  onSelectItem,
+}: DayCellProps) {
+  const interactiveBook = mode === "book" && open && chips.length > 0;
+  const DayTag = mode === "setup" ? "button" : "div";
+  const label = [
+    DateTime.fromISO(iso).toFormat("cccc d LLLL yyyy"),
+    open ? "open" : "unavailable",
+    today ? "today" : "",
+  ]
+    .filter(Boolean)
+    .join(", ");
+
+  return (
+    <DayTag
+      type={mode === "setup" ? "button" : undefined}
+      data-date={iso}
+      data-open={open ? "true" : "false"}
+      data-testid={`day-${iso}`}
+      aria-label={label}
+      aria-pressed={mode === "setup" ? open : undefined}
+      className={[
+        CELL_MIN_HEIGHT,
+        "p-1 text-left md:p-1.5",
+        open ? "bg-open text-open-ink" : "bg-closed text-closed-ink",
+        selected ? "ring-2 ring-inset ring-brass" : "",
+        mode === "setup" ? "cursor-pointer" : "",
+      ].join(" ")}
+      onPointerDown={(event) => {
+        if (mode !== "setup") return;
+        onPaintStart?.(iso, open, event.currentTarget, event.pointerId);
+      }}
+      onPointerEnter={() => {
+        if (mode !== "setup") return;
+        onPaintEnter?.(iso);
+      }}
+      onPointerUp={() => {
+        onPaintEnd?.();
+      }}
+    >
+      <div className="flex items-start justify-between gap-0.5">
+        <div
+          className={[
+            "font-mono text-[10px] md:text-xs",
+            today ? "text-brass" : "",
+          ].join(" ")}
+        >
+          {String(day).padStart(2, "0")}
+        </div>
+        {open ? null : <ClosedMark />}
+      </div>
+      {mode === "book" && chips.length > 0 ? (
+        <div className="mt-1 flex flex-col gap-1">
+          {chips.map((chip) => {
+            const active = selected && selectedItemId === chip.id;
+            return (
+              <button
+                key={chip.id}
+                type="button"
+                disabled={!interactiveBook}
+                data-testid={`chip-${iso}-${chip.name}`}
+                onClick={() => onSelectItem?.(iso, chip.id)}
+                className={[
+                  "flex min-h-11 w-full min-w-0 cursor-pointer items-center overflow-hidden rounded-sm px-0.5 text-left font-display text-[10px] font-semibold leading-tight tracking-normal md:min-h-0 md:px-1.5 md:py-0.5 md:text-[11px] md:tracking-wide",
+                  active
+                    ? "bg-accent text-accent-ink"
+                    : "border border-accent/30 bg-chip text-ink hover:border-accent",
+                  !interactiveBook ? "opacity-50" : "",
+                ].join(" ")}
+              >
+                <span className="min-w-0 break-all md:truncate">{chip.name}</span>
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+    </DayTag>
+  );
+});
+
+export const MonthCalendar = memo(function MonthCalendar({
   year,
   month,
   openDates,
@@ -46,15 +172,40 @@ export function MonthCalendar({
   itemsByDate,
   selectedDate,
   selectedItemId,
+  today,
   onPaintDates,
   onSelectItem,
 }: MonthCalendarProps) {
   const drag = useRef<{ origin: string; selecting: boolean } | null>(null);
-  const cells = monthCells(year, month);
+  const cells = useMemo(() => monthCells(year, month), [year, month]);
 
-  function paintRange(from: string, to: string, selecting: boolean) {
-    onPaintDates?.(isoDateRange(from, to), selecting);
-  }
+  const onPaintStart = useCallback(
+    (iso: string, currentlyOpen: boolean, target: HTMLElement, pointerId: number) => {
+      if (pointerId !== 0) {
+        try {
+          target.setPointerCapture(pointerId);
+        } catch {
+          // Synthetic events may not support capture.
+        }
+      }
+      const selecting = !currentlyOpen;
+      drag.current = { origin: iso, selecting };
+      onPaintDates?.(isoDateRange(iso, iso), selecting);
+    },
+    [onPaintDates],
+  );
+
+  const onPaintEnter = useCallback(
+    (iso: string) => {
+      if (!drag.current) return;
+      onPaintDates?.(isoDateRange(drag.current.origin, iso), drag.current.selecting);
+    },
+    [onPaintDates],
+  );
+
+  const onPaintEnd = useCallback(() => {
+    drag.current = null;
+  }, []);
 
   return (
     <div className="w-full min-w-0 max-w-full select-none">
@@ -77,79 +228,25 @@ export function MonthCalendar({
             );
           }
 
-          const open = openDates.has(cell.iso);
-          const chips = itemsByDate?.get(cell.iso) ?? [];
-          const interactiveBook = mode === "book" && open && chips.length > 0;
-          const selected = selectedDate === cell.iso;
-
-          const DayTag = mode === "setup" ? "button" : "div";
-
           return (
-            <DayTag
+            <DayCell
               key={cell.iso}
-              type={mode === "setup" ? "button" : undefined}
-              data-date={cell.iso}
-              data-testid={`day-${cell.iso}`}
-              className={[
-                CELL_MIN_HEIGHT,
-                "p-1 text-left md:p-1.5",
-                open ? "bg-open text-open-ink" : "bg-closed text-ink",
-                selected ? "ring-2 ring-inset ring-brass" : "",
-                mode === "setup" ? "cursor-pointer" : "",
-              ].join(" ")}
-              onPointerDown={(event) => {
-                if (mode !== "setup") return;
-                if (typeof event.pointerId === "number" && event.pointerId !== 0) {
-                  try {
-                    event.currentTarget.setPointerCapture(event.pointerId);
-                  } catch {
-                    // Synthetic events may not support capture.
-                  }
-                }
-                const selecting = !open;
-                drag.current = { origin: cell.iso, selecting };
-                paintRange(cell.iso, cell.iso, selecting);
-              }}
-              onPointerEnter={() => {
-                if (mode !== "setup" || !drag.current) return;
-                paintRange(drag.current.origin, cell.iso, drag.current.selecting);
-              }}
-              onPointerUp={() => {
-                drag.current = null;
-              }}
-            >
-              <div className="font-mono text-[10px] md:text-xs">
-                {String(cell.day).padStart(2, "0")}
-              </div>
-              {mode === "book" && (
-                <div className="mt-1 flex flex-col gap-1">
-                  {chips.map((chip) => {
-                    const active = selected && selectedItemId === chip.id;
-                    return (
-                      <button
-                        key={chip.id}
-                        type="button"
-                        disabled={!interactiveBook}
-                        data-testid={`chip-${cell.iso}-${chip.name}`}
-                        onClick={() => onSelectItem?.(cell.iso, chip.id)}
-                        className={[
-                          "flex min-h-11 w-full min-w-0 cursor-pointer items-center overflow-hidden rounded-sm px-0.5 text-left font-display text-[10px] font-semibold leading-tight tracking-normal md:min-h-0 md:px-1.5 md:py-0.5 md:text-[11px] md:tracking-wide",
-                          active
-                            ? "bg-closed text-open"
-                            : "bg-white/15 text-open-ink hover:bg-white/25",
-                          !interactiveBook ? "opacity-50" : "",
-                        ].join(" ")}
-                      >
-                        <span className="min-w-0 break-all md:truncate">{chip.name}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </DayTag>
+              iso={cell.iso}
+              day={cell.day}
+              open={openDates.has(cell.iso)}
+              selected={selectedDate === cell.iso}
+              today={today === cell.iso}
+              mode={mode}
+              chips={itemsByDate?.get(cell.iso) ?? EMPTY_CHIPS}
+              selectedItemId={selectedItemId}
+              onPaintStart={mode === "setup" ? onPaintStart : undefined}
+              onPaintEnter={mode === "setup" ? onPaintEnter : undefined}
+              onPaintEnd={mode === "setup" ? onPaintEnd : undefined}
+              onSelectItem={mode === "book" ? onSelectItem : undefined}
+            />
           );
         })}
       </div>
     </div>
   );
-}
+});

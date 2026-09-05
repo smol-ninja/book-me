@@ -10,7 +10,7 @@ export default function NotFound() {
       <p className="mt-4 text-lg text-muted">
         That username has not been claimed yet.
       </p>
-      <Link href="/" className="mt-8 inline-block border-b border-open text-open">
+      <Link href="/" className="mt-8 inline-block border-b border-accent text-accent">
         Create one
       </Link>
     </main>

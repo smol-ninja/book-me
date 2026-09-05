@@ -3,7 +3,7 @@
 import { DateTime } from "luxon";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { MonthCalendar } from "@/components/month-calendar";
 import {
   DEFAULT_DAY_END,
@@ -12,6 +12,7 @@ import {
   DURATION_PRESETS,
   TIMEZONES,
 } from "@/lib/constants";
+import { todayIso } from "@/lib/slots";
 import type { PublicCalendar } from "@/lib/types";
 import { normalizeUsername } from "@/lib/username";
 
@@ -83,8 +84,9 @@ export function SetupForm({ username, initial, editKey, taken }: SetupFormProps)
     () => [...openDates].sort(),
     [openDates],
   );
+  const today = todayIso(timezone);
 
-  function paintDates(dates: string[], selected: boolean) {
+  const paintDates = useCallback((dates: string[], selected: boolean) => {
     setOpenDates((current) => {
       const next = new Set(current);
       for (const date of dates) {
@@ -101,7 +103,7 @@ export function SetupForm({ username, initial, editKey, taken }: SetupFormProps)
         })),
       );
     }
-  }
+  }, []);
 
   async function save() {
     setSaving(true);
@@ -167,7 +169,7 @@ export function SetupForm({ username, initial, editKey, taken }: SetupFormProps)
           /{username} already points to a calendar. Pick another username, or
           open this page with the secret edit link.
         </p>
-        <Link className="mt-8 inline-block border-b border-open text-open" href="/">
+        <Link className="mt-8 inline-block border-b border-accent text-accent" href="/">
           Choose a different name
         </Link>
       </main>
@@ -186,9 +188,17 @@ export function SetupForm({ username, initial, editKey, taken }: SetupFormProps)
         /{username}
       </h1>
       <p className="mt-3 max-w-2xl text-base text-muted sm:text-lg">
-        Blue days are open for bookings. Attach activities to those days, then
-        share the URL.
+        White days are open. Gray days with an X are closed. Attach activities
+        to open days, then share the URL.
       </p>
+      {editKey ? (
+        <Link
+          href={`/setup/${username}/bookings?key=${encodeURIComponent(editKey)}`}
+          className="mt-3 inline-flex min-h-11 items-center text-sm text-accent"
+        >
+          View bookings
+        </Link>
+      ) : null}
 
       <div className="mt-8 grid min-w-0 gap-8 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,0.8fr)]">
         <section className="min-w-0">
@@ -218,6 +228,7 @@ export function SetupForm({ username, initial, editKey, taken }: SetupFormProps)
             month={cursor.month}
             openDates={openDates}
             mode="setup"
+            today={today}
             onPaintDates={paintDates}
           />
           <p className="mt-3 text-sm text-muted">
@@ -233,7 +244,7 @@ export function SetupForm({ username, initial, editKey, taken }: SetupFormProps)
             <input
               value={displayName}
               onChange={(event) => setDisplayName(event.target.value)}
-              className="mt-1 w-full min-w-0 border border-rule bg-closed px-3 py-2.5 text-base"
+              className="mt-1 w-full min-w-0 border border-rule bg-open px-3 py-2.5 text-base"
             />
           </label>
           <label className="block">
@@ -245,7 +256,7 @@ export function SetupForm({ username, initial, editKey, taken }: SetupFormProps)
               onChange={(event) => setPhone(event.target.value)}
               placeholder="+44 7911 123456"
               autoComplete="tel"
-              className="mt-1 w-full min-w-0 border border-rule bg-closed px-3 py-2.5 text-base"
+              className="mt-1 w-full min-w-0 border border-rule bg-open px-3 py-2.5 text-base"
             />
           </label>
           <label className="block">
@@ -255,7 +266,7 @@ export function SetupForm({ username, initial, editKey, taken }: SetupFormProps)
             <select
               value={timezone}
               onChange={(event) => setTimezone(event.target.value)}
-              className="mt-1 w-full min-w-0 border border-rule bg-closed px-3 py-2.5 text-base"
+              className="mt-1 w-full min-w-0 border border-rule bg-open px-3 py-2.5 text-base"
             >
               {TIMEZONES.map((zone) => (
                 <option key={zone} value={zone}>
@@ -273,7 +284,7 @@ export function SetupForm({ username, initial, editKey, taken }: SetupFormProps)
                 type="time"
                 value={dayStart}
                 onChange={(event) => setDayStart(event.target.value)}
-                className="mt-1 w-full min-w-0 border border-rule bg-closed px-2 py-2.5 font-mono text-base sm:px-3"
+                className="mt-1 w-full min-w-0 border border-rule bg-open px-2 py-2.5 font-mono text-base sm:px-3"
               />
             </label>
             <label className="block min-w-0">
@@ -284,7 +295,7 @@ export function SetupForm({ username, initial, editKey, taken }: SetupFormProps)
                 type="time"
                 value={dayEnd}
                 onChange={(event) => setDayEnd(event.target.value)}
-                className="mt-1 w-full min-w-0 border border-rule bg-closed px-2 py-2.5 font-mono text-base sm:px-3"
+                className="mt-1 w-full min-w-0 border border-rule bg-open px-2 py-2.5 font-mono text-base sm:px-3"
               />
             </label>
           </div>
@@ -294,7 +305,7 @@ export function SetupForm({ username, initial, editKey, taken }: SetupFormProps)
               <h2 className="font-display text-xl font-semibold sm:text-2xl">Items</h2>
               <button
                 type="button"
-                className="min-h-11 shrink-0 cursor-pointer border border-open px-3 py-2 text-sm text-open md:min-h-0 md:py-1"
+                className="min-h-11 shrink-0 cursor-pointer border border-accent px-3 py-2 text-sm text-accent md:min-h-0 md:py-1"
                 onClick={() =>
                   setItems((current) => [
                     ...current,
@@ -312,7 +323,7 @@ export function SetupForm({ username, initial, editKey, taken }: SetupFormProps)
             </div>
             <div className="space-y-4">
               {items.map((item) => (
-                <article key={item.clientId} className="border border-rule bg-closed p-3">
+                <article key={item.clientId} className="border border-rule bg-open p-3">
                   <div className="flex flex-col gap-2 sm:flex-row">
                     <input
                       aria-label="Item name"
@@ -355,7 +366,7 @@ export function SetupForm({ username, initial, editKey, taken }: SetupFormProps)
                   </p>
                   <div className="mt-2 flex flex-wrap gap-1.5">
                     {sortedOpen.length === 0 ? (
-                      <p className="text-sm text-muted">Open some blue days first.</p>
+                      <p className="text-sm text-muted">Open some days first.</p>
                     ) : (
                       sortedOpen.map((date) => {
                         const active = item.dates.includes(date);
@@ -378,7 +389,7 @@ export function SetupForm({ username, initial, editKey, taken }: SetupFormProps)
                             }
                             className={[
                               "min-h-11 cursor-pointer px-3 py-2 font-mono text-xs md:min-h-0 md:px-2 md:py-1",
-                              active ? "bg-open text-open-ink" : "border border-rule",
+                              active ? "bg-accent text-accent-ink" : "border border-rule",
                             ].join(" ")}
                           >
                             {label}
@@ -392,13 +403,13 @@ export function SetupForm({ username, initial, editKey, taken }: SetupFormProps)
             </div>
           </div>
 
-          {error ? <p className="text-sm text-open">{error}</p> : null}
+          {error ? <p className="text-sm text-accent">{error}</p> : null}
 
           <button
             type="button"
             onClick={() => void save()}
             disabled={saving}
-            className="min-h-12 w-full cursor-pointer bg-open px-4 py-3 font-display text-lg font-semibold text-open-ink disabled:opacity-60"
+            className="min-h-12 w-full cursor-pointer bg-accent px-4 py-3 font-display text-lg font-semibold text-accent-ink disabled:opacity-60"
           >
             {saving ? "Saving…" : "Save calendar"}
           </button>

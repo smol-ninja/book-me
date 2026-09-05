@@ -12,7 +12,7 @@ export default function HomePage() {
         Let people pick the thing.
       </h1>
       <p className="mt-5 max-w-xl text-lg text-muted sm:mt-6 sm:text-xl">
-        Paint blue days, attach dinner or badminton, share the link. Guests pick
+        Paint open days, attach dinner or badminton, share the link. Guests pick
         an item, then a time, with a thirty-minute buffer between bookings.
       </p>
       <ClaimForm />

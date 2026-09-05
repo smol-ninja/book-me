@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
+import { calendarShareUrls } from "@/lib/app-origin";
 
 export function DoneLinks({
   username,
@@ -16,15 +17,11 @@ export function DoneLinks({
   const whatsapp = searchParams.get("wa");
   const [copied, setCopied] = useState<string | null>(null);
 
-  const publicUrl = useMemo(
-    () => `${origin}/${username}`,
-    [origin, username],
-  );
-  const editUrl = useMemo(
-    () =>
-      `${origin}/setup/${username}?key=${encodeURIComponent(key ?? "")}`,
+  const urls = useMemo(
+    () => (key ? calendarShareUrls(origin, username, key) : null),
     [origin, username, key],
   );
+  const publicUrl = urls?.publicUrl ?? `${origin}/${username}`;
 
   async function copy(label: string, value: string) {
     await navigator.clipboard.writeText(value);
@@ -60,12 +57,12 @@ export function DoneLinks({
           <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted">
             Public URL
           </p>
-          <p className="mt-1 break-all border border-rule bg-closed px-3 py-2 font-mono text-sm">
+          <p className="mt-1 break-all border border-rule bg-open px-3 py-2 font-mono text-sm">
             {publicUrl}
           </p>
           <button
             type="button"
-            className="mt-2 min-h-11 cursor-pointer py-2 text-sm text-open"
+            className="mt-2 min-h-11 cursor-pointer py-2 text-sm text-accent"
             onClick={() => void copy("public", publicUrl)}
           >
             {copied === "public" ? "Copied" : "Copy public URL"}
@@ -75,24 +72,51 @@ export function DoneLinks({
           <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted">
             Secret edit URL
           </p>
-          <p className="mt-1 break-all border border-rule bg-closed px-3 py-2 font-mono text-sm">
-            {key ? editUrl : "Missing from this page. Check the link after save."}
+          <p className="mt-1 break-all border border-rule bg-open px-3 py-2 font-mono text-sm">
+            {urls ? urls.editUrl : "Missing from this page. Check the link after save."}
           </p>
-          {key ? (
+          {urls ? (
             <button
               type="button"
-              className="mt-2 min-h-11 cursor-pointer py-2 text-sm text-open"
-              onClick={() => void copy("edit", editUrl)}
+              className="mt-2 min-h-11 cursor-pointer py-2 text-sm text-accent"
+              onClick={() => void copy("edit", urls.editUrl)}
             >
               {copied === "edit" ? "Copied" : "Copy edit URL"}
             </button>
+          ) : null}
+        </div>
+        <div>
+          <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted">
+            View bookings
+          </p>
+          <p className="mt-1 break-all border border-rule bg-open px-3 py-2 font-mono text-sm">
+            {urls
+              ? urls.bookingsUrl
+              : "Missing from this page. Check the link after save."}
+          </p>
+          {urls ? (
+            <div className="mt-2 flex flex-wrap gap-x-4">
+              <button
+                type="button"
+                className="min-h-11 cursor-pointer py-2 text-sm text-accent"
+                onClick={() => void copy("bookings", urls.bookingsUrl)}
+              >
+                {copied === "bookings" ? "Copied" : "Copy bookings URL"}
+              </button>
+              <Link
+                href={`/setup/${username}/bookings?key=${encodeURIComponent(key ?? "")}`}
+                className="inline-flex min-h-11 items-center py-2 text-sm text-accent"
+              >
+                Open bookings
+              </Link>
+            </div>
           ) : null}
         </div>
       </section>
 
       <Link
         href={`/${username}`}
-        className="mt-10 inline-block min-h-12 w-full cursor-pointer bg-open px-5 py-3 text-center font-display text-lg font-semibold text-open-ink sm:w-auto"
+        className="mt-10 inline-block min-h-12 w-full cursor-pointer bg-accent px-5 py-3 text-center font-display text-lg font-semibold text-accent-ink sm:w-auto"
       >
         Open booking page
       </Link>
