@@ -38,6 +38,7 @@ test("creator can open dates, add items, and a guest can book a buffered slot", 
   await secondItem.getByRole("button", { name: "11 Sep" }).click();
   await secondItem.getByRole("button", { name: "12 Sep" }).click();
 
+  await page.getByLabel("Email").fill(`host-${username}@example.com`);
   await page.getByPlaceholder("+44 7911 123456").fill("+447496888123");
   await page.getByRole("button", { name: "Save calendar" }).click();
   await expect(page.getByRole("heading", { name: `/${username} is live` })).toBeVisible();
@@ -57,6 +58,7 @@ test("creator can open dates, add items, and a guest can book a buffered slot", 
   await firstSlot.click();
 
   await page.getByLabel("Name").fill("Ada Lovelace");
+  await page.getByLabel("Email").fill("ada@example.com");
   await page.getByPlaceholder("+44 7911 123456").fill("+447496888124");
   await page.getByRole("button", { name: "Book slot" }).click();
   await expect(page.getByRole("heading", { name: "You are on the ledger" })).toBeVisible();

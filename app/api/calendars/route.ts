@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { appOrigin, calendarShareUrls } from "@/lib/app-origin";
 import { createCalendar, HttpError } from "@/lib/calendar-service";
 import { toPublicCalendar } from "@/lib/mappers";
-import { notifyCalendarCreated } from "@/lib/whatsapp";
+import { notifyCalendarCreated } from "@/lib/email";
 
 export const runtime = "nodejs";
 
@@ -15,8 +15,8 @@ export async function POST(request: Request) {
       calendar.username,
       editKey,
     );
-    const whatsapp = await notifyCalendarCreated({
-      creatorPhone: calendar.phoneE164,
+    const emailed = await notifyCalendarCreated({
+      creatorEmail: calendar.email,
       username: calendar.username,
       publicUrl,
       editUrl,
@@ -25,7 +25,7 @@ export async function POST(request: Request) {
       {
         calendar: toPublicCalendar(calendar),
         editKey,
-        whatsappSent: whatsapp.sent,
+        emailSent: emailed.sent,
       },
       { status: 201 },
     );

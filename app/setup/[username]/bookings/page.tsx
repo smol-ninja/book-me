@@ -98,6 +98,9 @@ export default async function BookingsPage({
                     </p>
                     <p className="mt-1 break-words">{booking.guestName}</p>
                     <p className="break-all font-mono text-sm text-muted">
+                      {booking.guestEmail}
+                    </p>
+                    <p className="break-all font-mono text-sm text-muted">
                       {formatPhoneDisplay(booking.guestPhone)}
                     </p>
                   </li>

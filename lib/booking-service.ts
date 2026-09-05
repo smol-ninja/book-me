@@ -7,7 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { dayBoundsUtc, generateSlotStarts } from "@/lib/slots";
 import { normalizeUsername } from "@/lib/username";
 import { bookInputSchema } from "@/lib/validation";
-import { notifyBooking } from "@/lib/whatsapp";
+import { notifyBooking, normalizeEmail } from "@/lib/email";
 
 export async function listSlots(username: string, date: string, itemId: string) {
   const calendar = await prisma.calendar.findUnique({
@@ -57,6 +57,7 @@ export type CreatorBookingRow = {
   startsAt: Date;
   endsAt: Date;
   guestName: string;
+  guestEmail: string;
   guestPhone: string;
   itemName: string;
 };
@@ -69,6 +70,7 @@ export type BookingDayGroup = {
     timeRange: string;
     itemName: string;
     guestName: string;
+    guestEmail: string;
     guestPhone: string;
     upcoming: boolean;
   }[];
@@ -102,6 +104,7 @@ export function groupBookingsByDate(
       timeRange: `${start.toFormat("HH:mm")}–${end.toFormat("HH:mm")}`,
       itemName: booking.itemName,
       guestName: booking.guestName,
+      guestEmail: booking.guestEmail,
       guestPhone: booking.guestPhone,
       upcoming: booking.endsAt >= now,
     });
@@ -134,6 +137,7 @@ export async function getCreatorBookings(username: string, editKey: string | und
       startsAt: true,
       endsAt: true,
       guestName: true,
+      guestEmail: true,
       guestPhone: true,
       item: { select: { name: true } },
     },
@@ -151,6 +155,7 @@ export async function getCreatorBookings(username: string, editKey: string | und
       startsAt: row.startsAt,
       endsAt: row.endsAt,
       guestName: row.guestName,
+      guestEmail: row.guestEmail,
       guestPhone: row.guestPhone,
       itemName: row.item.name,
     })),
@@ -167,6 +172,10 @@ export async function createBooking(body: unknown) {
   const guestPhone = toE164(parsed.data.guestPhone);
   if (!guestPhone) {
     throw new HttpError("Enter a valid phone number with country code.", 400);
+  }
+  const guestEmail = normalizeEmail(parsed.data.guestEmail);
+  if (!guestEmail) {
+    throw new HttpError("Enter a valid email address.", 400);
   }
 
   const start = DateTime.fromISO(parsed.data.startsAt, { setZone: true });
@@ -235,6 +244,7 @@ export async function createBooking(body: unknown) {
         startsAt: expected.toUTC().toJSDate(),
         endsAt: end.toUTC().toJSDate(),
         guestName: parsed.data.guestName,
+        guestEmail,
         guestPhone,
       },
     });
@@ -242,10 +252,11 @@ export async function createBooking(body: unknown) {
     return { calendar, item, booking };
   });
 
-  const whatsapp = await notifyBooking({
-    creatorPhone: result.calendar.phoneE164,
+  const emailed = await notifyBooking({
+    creatorEmail: result.calendar.email,
     creatorName: result.calendar.displayName,
     guestName: parsed.data.guestName,
+    guestEmail,
     guestPhone,
     itemName: result.item.name,
     durationMinutes: result.item.durationMinutes,
@@ -262,7 +273,7 @@ export async function createBooking(body: unknown) {
     startsAt: result.booking.startsAt.toISOString(),
     endsAt: result.booking.endsAt.toISOString(),
     timezone: result.calendar.timezone,
-    whatsappSent: whatsapp.sent,
+    emailSent: emailed.sent,
     calendar: toPublicCalendar({ ...result.calendar, items: [result.item] }),
   };
 }

@@ -16,6 +16,7 @@ export type PublicCalendar = {
 };
 
 export type EditableCalendar = PublicCalendar & {
+  email: string;
   phone: string;
   canEdit: true;
 };

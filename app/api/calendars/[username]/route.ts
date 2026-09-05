@@ -22,6 +22,7 @@ export async function GET(request: Request, context: RouteContext) {
     return NextResponse.json({
       ...publicCalendar,
       phone: calendar.phoneE164,
+      email: calendar.email,
       canEdit: true,
     });
   }

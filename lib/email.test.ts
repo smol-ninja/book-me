@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { calendarCreatedWhatsAppBody } from "@/lib/whatsapp";
+import { calendarCreatedEmailBody } from "@/lib/email";
 
-describe("calendarCreatedWhatsAppBody", () => {
+describe("calendarCreatedEmailBody", () => {
   it("includes the public and secret edit URLs", () => {
-    const body = calendarCreatedWhatsAppBody({
+    const body = calendarCreatedEmailBody({
       username: "ada",
       publicUrl: "https://book-me-delta.vercel.app/ada",
       editUrl: "https://book-me-delta.vercel.app/setup/ada?key=secret",

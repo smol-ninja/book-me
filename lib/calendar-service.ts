@@ -1,5 +1,6 @@
 import type { Calendar, Item, Prisma } from "@prisma/client";
 import { createEditKey, editKeysMatch, hashEditKey } from "@/lib/edit-key";
+import { normalizeEmail } from "@/lib/email";
 import { uniqueSorted } from "@/lib/mappers";
 import { toE164 } from "@/lib/phone";
 import { prisma } from "@/lib/prisma";
@@ -18,6 +19,7 @@ export class HttpError extends Error {
 type CalendarPayload = {
   username: string;
   displayName: string;
+  email: string;
   phone: string;
   timezone: string;
   dayStart: string;
@@ -38,6 +40,10 @@ function parseCalendarPayload(body: unknown): CalendarPayload {
     const issue = parsed.error.issues[0];
     throw new HttpError(issue?.message ?? "Invalid calendar.", 400);
   }
+  const email = normalizeEmail(parsed.data.email);
+  if (!email) {
+    throw new HttpError("Enter a valid email address.", 400);
+  }
   const phone = toE164(parsed.data.phone);
   if (!phone) {
     throw new HttpError("Enter a valid phone number with country code.", 400);
@@ -45,6 +51,7 @@ function parseCalendarPayload(body: unknown): CalendarPayload {
   return {
     ...parsed.data,
     username: normalizeUsername(parsed.data.username),
+    email,
     phone,
     openDates: uniqueSorted(parsed.data.openDates),
     items: parsed.data.items.map((item) => ({
@@ -120,6 +127,7 @@ export async function createCalendar(body: unknown): Promise<{
       data: {
         username: payload.username,
         displayName: payload.displayName,
+        email: payload.email,
         phoneE164: payload.phone,
         timezone: payload.timezone,
         dayStart: payload.dayStart,
@@ -161,6 +169,7 @@ export async function updateCalendar(
       where: { id: existing.id },
       data: {
         displayName: payload.displayName,
+        email: payload.email,
         phoneE164: payload.phone,
         timezone: payload.timezone,
         dayStart: payload.dayStart,

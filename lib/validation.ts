@@ -16,6 +16,7 @@ export const calendarInputSchema = z
   .object({
     username: z.string(),
     displayName: z.string().trim().min(1).max(60),
+    email: z.string().min(3).max(120),
     phone: z.string().min(5).max(30),
     timezone: z.string().min(1),
     dayStart: hm,
@@ -69,5 +70,6 @@ export const bookInputSchema = z.object({
   itemId: z.string().min(1),
   startsAt: z.string().min(1),
   guestName: z.string().trim().min(1).max(80),
+  guestEmail: z.string().min(3).max(120),
   guestPhone: z.string().min(5).max(30),
 });

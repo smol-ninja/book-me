@@ -28,6 +28,7 @@ export function BookingBoard({ calendar }: BookingBoardProps) {
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [startsAt, setStartsAt] = useState<string | null>(null);
   const [guestName, setGuestName] = useState("");
+  const [guestEmail, setGuestEmail] = useState("");
   const [guestPhone, setGuestPhone] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -35,7 +36,7 @@ export function BookingBoard({ calendar }: BookingBoardProps) {
     itemName: string;
     startsAt: string;
     endsAt: string;
-    whatsappSent: boolean;
+    emailSent: boolean;
   } | null>(null);
 
   const openDates = useMemo(() => new Set(calendar.openDates), [calendar.openDates]);
@@ -98,6 +99,7 @@ export function BookingBoard({ calendar }: BookingBoardProps) {
         itemId: selectedItemId,
         startsAt,
         guestName,
+        guestEmail,
         guestPhone,
       }),
     });
@@ -106,7 +108,7 @@ export function BookingBoard({ calendar }: BookingBoardProps) {
       itemName?: string;
       startsAt?: string;
       endsAt?: string;
-      whatsappSent?: boolean;
+      emailSent?: boolean;
     };
     setSubmitting(false);
     if (!response.ok) {
@@ -117,7 +119,7 @@ export function BookingBoard({ calendar }: BookingBoardProps) {
       itemName: data.itemName ?? selectedItem?.name ?? "Item",
       startsAt: data.startsAt ?? startsAt,
       endsAt: data.endsAt ?? startsAt,
-      whatsappSent: Boolean(data.whatsappSent),
+      emailSent: Boolean(data.emailSent),
     });
   }
 
@@ -140,9 +142,9 @@ export function BookingBoard({ calendar }: BookingBoardProps) {
           )}
         </p>
         <p className="mt-4 text-muted">
-          {confirmation.whatsappSent
-            ? "Text confirmations are on the way to you and the host."
-            : "This slot is booked. The SMS may be delayed."}
+          {confirmation.emailSent
+            ? "Email confirmations are on the way to you and the host."
+            : "This slot is booked. The email may be delayed."}
         </p>
         <button
           type="button"
@@ -152,6 +154,7 @@ export function BookingBoard({ calendar }: BookingBoardProps) {
             const itemId = selectedItemId;
             setConfirmation(null);
             setGuestName("");
+            setGuestEmail("");
             setGuestPhone("");
             setStartsAt(null);
             if (date && itemId) {
@@ -288,6 +291,19 @@ export function BookingBoard({ calendar }: BookingBoardProps) {
                   </label>
                   <label className="block">
                     <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted">
+                      Email
+                    </span>
+                    <input
+                      required
+                      type="email"
+                      value={guestEmail}
+                      onChange={(event) => setGuestEmail(event.target.value)}
+                      placeholder="you@example.com"
+                      className="mt-1 w-full min-w-0 border border-rule bg-paper px-3 py-2.5 text-base"
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted">
                       Phone
                     </span>
                     <input
@@ -299,7 +315,7 @@ export function BookingBoard({ calendar }: BookingBoardProps) {
                     />
                   </label>
                   <p className="text-xs text-muted">
-                    We text you and the host. No app signup needed.
+                    We email you and the host. No app signup needed.
                   </p>
                   {formError ? <p className="text-sm text-accent">{formError}</p> : null}
                   <button

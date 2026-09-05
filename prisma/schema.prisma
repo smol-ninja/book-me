@@ -11,6 +11,7 @@ model Calendar {
   id          String    @id @default(cuid())
   username    String    @unique
   displayName String
+  email       String
   phoneE164   String
   timezone    String
   dayStart    String
@@ -42,6 +43,7 @@ model Booking {
   startsAt   DateTime
   endsAt     DateTime
   guestName  String
+  guestEmail String
   guestPhone String
   createdAt  DateTime @default(now())
   calendar   Calendar @relation(fields: [calendarId], references: [id], onDelete: Cascade)

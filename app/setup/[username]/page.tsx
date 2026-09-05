@@ -41,7 +41,13 @@ export default async function SetupPage({
         calendar
           ? {
               ...toPublicCalendar(calendar),
-              ...(canEdit ? { phone: calendar.phoneE164, canEdit: true } : {}),
+              ...(canEdit
+                ? {
+                    phone: calendar.phoneE164,
+                    email: calendar.email,
+                    canEdit: true,
+                  }
+                : {}),
             }
           : null
       }

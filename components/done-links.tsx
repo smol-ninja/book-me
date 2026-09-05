@@ -14,7 +14,7 @@ export function DoneLinks({
 }) {
   const searchParams = useSearchParams();
   const key = searchParams.get("key");
-  const whatsapp = searchParams.get("wa");
+  const emailed = searchParams.get("em");
   const [copied, setCopied] = useState<string | null>(null);
 
   const urls = useMemo(
@@ -40,14 +40,14 @@ export function DoneLinks({
         Send the public URL to guests. Keep the edit link private — it is the
         only way back in.
       </p>
-      {whatsapp === "1" ? (
+      {emailed === "1" ? (
         <p className="mt-3 text-muted">
-          Both URLs were also texted to your phone so you have a record.
+          Both URLs were also emailed to you so you have a record.
         </p>
       ) : null}
-      {whatsapp === "0" ? (
+      {emailed === "0" ? (
         <p className="mt-3 text-muted">
-          Copy both URLs now. SMS delivery may be delayed.
+          Copy both URLs now. Email delivery may be delayed.
         </p>
       ) : null}
 

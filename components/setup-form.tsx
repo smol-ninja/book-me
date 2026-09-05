@@ -26,7 +26,11 @@ type DraftItem = {
 
 type SetupFormProps = {
   username: string;
-  initial: (PublicCalendar & { phone?: string; canEdit?: boolean }) | null;
+  initial: (PublicCalendar & {
+    phone?: string;
+    email?: string;
+    canEdit?: boolean;
+  }) | null;
   editKey: string | null;
   taken: boolean;
 };
@@ -41,6 +45,7 @@ function loadStoredKey(username: string): string | null {
 export function SetupForm({ username, initial, editKey, taken }: SetupFormProps) {
   const router = useRouter();
   const [displayName, setDisplayName] = useState(initial?.displayName ?? username);
+  const [email, setEmail] = useState(initial?.email ?? "");
   const [phone, setPhone] = useState(initial?.phone ?? "");
   const [timezone, setTimezone] = useState(initial?.timezone ?? DEFAULT_TIMEZONE);
   const [dayStart, setDayStart] = useState(initial?.dayStart ?? DEFAULT_DAY_START);
@@ -111,6 +116,7 @@ export function SetupForm({ username, initial, editKey, taken }: SetupFormProps)
     const payload = {
       username: normalizeUsername(username),
       displayName: displayName.trim() || username,
+      email,
       phone,
       timezone,
       dayStart,
@@ -139,7 +145,7 @@ export function SetupForm({ username, initial, editKey, taken }: SetupFormProps)
     const data = (await response.json()) as {
       error?: string;
       editKey?: string;
-      whatsappSent?: boolean;
+      emailSent?: boolean;
     };
     setSaving(false);
     if (!response.ok) {
@@ -151,7 +157,7 @@ export function SetupForm({ username, initial, editKey, taken }: SetupFormProps)
       window.localStorage.setItem(STORAGE_PREFIX + username, nextKey);
       const params = new URLSearchParams({ key: nextKey });
       if (!isUpdate) {
-        params.set("wa", data.whatsappSent ? "1" : "0");
+        params.set("em", data.emailSent ? "1" : "0");
       }
       router.push(`/setup/${username}/done?${params.toString()}`);
       return;
@@ -249,6 +255,23 @@ export function SetupForm({ username, initial, editKey, taken }: SetupFormProps)
           </label>
           <label className="block">
             <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted">
+              Email
+            </span>
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="you@example.com"
+              autoComplete="email"
+              className="mt-1 w-full min-w-0 border border-rule bg-open px-3 py-2.5 text-base"
+            />
+            <p className="mt-1 text-xs text-muted">
+              We email this address when someone books.
+            </p>
+          </label>
+          <label className="block">
+            <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted">
               Mobile number
             </span>
             <input
@@ -259,7 +282,7 @@ export function SetupForm({ username, initial, editKey, taken }: SetupFormProps)
               className="mt-1 w-full min-w-0 border border-rule bg-open px-3 py-2.5 text-base"
             />
             <p className="mt-1 text-xs text-muted">
-              We text this number when someone books.
+              So guests can reach you if needed.
             </p>
           </label>
           <label className="block">
