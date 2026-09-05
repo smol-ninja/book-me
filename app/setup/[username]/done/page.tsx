@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { DoneLinks } from "@/components/done-links";
+import { appOrigin } from "@/lib/app-origin";
 
 export default async function DonePage({
   params,
@@ -15,7 +16,7 @@ export default async function DonePage({
         </main>
       }
     >
-      <DoneLinks username={username} />
+      <DoneLinks username={username} origin={appOrigin()} />
     </Suspense>
   );
 }

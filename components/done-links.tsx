@@ -4,15 +4,20 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 
-export function DoneLinks({ username }: { username: string }) {
+export function DoneLinks({
+  username,
+  origin,
+}: {
+  username: string;
+  origin: string;
+}) {
   const searchParams = useSearchParams();
   const key = searchParams.get("key");
   const whatsapp = searchParams.get("wa");
   const [copied, setCopied] = useState<string | null>(null);
-  const origin = typeof window === "undefined" ? "" : window.location.origin;
 
   const publicUrl = useMemo(
-    () => (origin ? `${origin}/${username}` : `/${username}`),
+    () => `${origin}/${username}`,
     [origin, username],
   );
   const editUrl = useMemo(
