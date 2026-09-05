@@ -12,11 +12,11 @@ function createTwilioClient() {
     process.env.TWILIO_API_SECRET ?? process.env.TWILIO_AUTH_TOKEN;
   const authToken = process.env.TWILIO_AUTH_TOKEN;
 
-  if (accountSid?.startsWith("AC") && apiKey?.startsWith("SK") && apiSecret) {
-    return twilio(apiKey, apiSecret, { accountSid });
-  }
   if (accountSid?.startsWith("AC") && authToken) {
     return twilio(accountSid, authToken);
+  }
+  if (accountSid?.startsWith("AC") && apiKey?.startsWith("SK") && apiSecret) {
+    return twilio(apiKey, apiSecret, { accountSid });
   }
   return null;
 }
