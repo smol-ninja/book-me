@@ -21,6 +21,57 @@ function createTwilioClient() {
   return null;
 }
 
+async function sendWhatsApp(
+  to: string,
+  body: string,
+): Promise<{ sent: boolean; error?: string }> {
+  const from = process.env.TWILIO_WHATSAPP_FROM;
+  const client = createTwilioClient();
+  if (!from || !client) {
+    return { sent: false, error: "not_configured" };
+  }
+
+  try {
+    await client.messages.create({
+      from,
+      to: whatsappAddress(to),
+      body,
+    });
+    return { sent: true };
+  } catch (error) {
+    console.error("Twilio WhatsApp send failed", error);
+    return { sent: false, error: "send_failed" };
+  }
+}
+
+export function calendarCreatedWhatsAppBody(input: {
+  username: string;
+  publicUrl: string;
+  editUrl: string;
+}): string {
+  return [
+    `Your Book-me calendar /${input.username} is live.`,
+    "",
+    "Public (share with guests):",
+    input.publicUrl,
+    "",
+    "Edit (keep this private):",
+    input.editUrl,
+  ].join("\n");
+}
+
+export async function notifyCalendarCreated(input: {
+  creatorPhone: string;
+  username: string;
+  publicUrl: string;
+  editUrl: string;
+}): Promise<{ sent: boolean; error?: string }> {
+  return sendWhatsApp(
+    input.creatorPhone,
+    calendarCreatedWhatsAppBody(input),
+  );
+}
+
 export async function notifyBooking(input: {
   creatorPhone: string;
   creatorName: string;
@@ -33,12 +84,6 @@ export async function notifyBooking(input: {
   timezone: string;
   username: string;
 }): Promise<{ sent: boolean; error?: string }> {
-  const from = process.env.TWILIO_WHATSAPP_FROM;
-  const client = createTwilioClient();
-  if (!from || !client) {
-    return { sent: false, error: "not_configured" };
-  }
-
   const when = formatRange(input.startsAt, input.endsAt, input.timezone);
   const guestBody = [
     "You're booked.",
@@ -54,22 +99,15 @@ export async function notifyBooking(input: {
     `When: ${when}`,
   ].join("\n");
 
-  try {
-    await Promise.all([
-      client.messages.create({
-        from,
-        to: whatsappAddress(input.creatorPhone),
-        body: creatorBody,
-      }),
-      client.messages.create({
-        from,
-        to: whatsappAddress(input.guestPhone),
-        body: guestBody,
-      }),
-    ]);
+  const [creator, guest] = await Promise.all([
+    sendWhatsApp(input.creatorPhone, creatorBody),
+    sendWhatsApp(input.guestPhone, guestBody),
+  ]);
+  if (creator.sent && guest.sent) {
     return { sent: true };
-  } catch (error) {
-    console.error("Twilio WhatsApp send failed", error);
-    return { sent: false, error: "send_failed" };
   }
+  return {
+    sent: false,
+    error: creator.error ?? guest.error ?? "send_failed",
+  };
 }

@@ -134,7 +134,11 @@ export function SetupForm({ username, initial, editKey, taken }: SetupFormProps)
         body: JSON.stringify(payload),
       },
     );
-    const data = (await response.json()) as { error?: string; editKey?: string };
+    const data = (await response.json()) as {
+      error?: string;
+      editKey?: string;
+      whatsappSent?: boolean;
+    };
     setSaving(false);
     if (!response.ok) {
       setError(data.error ?? "Could not save.");
@@ -143,7 +147,11 @@ export function SetupForm({ username, initial, editKey, taken }: SetupFormProps)
     const nextKey = data.editKey ?? editKey ?? loadStoredKey(username);
     if (nextKey) {
       window.localStorage.setItem(STORAGE_PREFIX + username, nextKey);
-      router.push(`/setup/${username}/done?key=${encodeURIComponent(nextKey)}`);
+      const params = new URLSearchParams({ key: nextKey });
+      if (!isUpdate) {
+        params.set("wa", data.whatsappSent ? "1" : "0");
+      }
+      router.push(`/setup/${username}/done?${params.toString()}`);
       return;
     }
     setError("Saved, but the edit key is missing. Keep this tab open and try again.");

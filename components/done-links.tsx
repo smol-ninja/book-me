@@ -7,6 +7,7 @@ import { useMemo, useState } from "react";
 export function DoneLinks({ username }: { username: string }) {
   const searchParams = useSearchParams();
   const key = searchParams.get("key");
+  const whatsapp = searchParams.get("wa");
   const [copied, setCopied] = useState<string | null>(null);
   const origin = typeof window === "undefined" ? "" : window.location.origin;
 
@@ -37,6 +38,17 @@ export function DoneLinks({ username }: { username: string }) {
         Send the public URL to guests. Keep the edit link private — it is the
         only way back in.
       </p>
+      {whatsapp === "1" ? (
+        <p className="mt-3 text-muted">
+          Both URLs were also sent to your WhatsApp so you have a record.
+        </p>
+      ) : null}
+      {whatsapp === "0" ? (
+        <p className="mt-3 text-muted">
+          Copy both URLs now. WhatsApp delivery may be delayed until messaging
+          is fully enabled on the Twilio account.
+        </p>
+      ) : null}
 
       <section className="mt-8 space-y-6">
         <div>
