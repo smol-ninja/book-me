@@ -151,8 +151,10 @@ export function SetupForm({ username, initial, editKey, taken }: SetupFormProps)
 
   if (taken && !canEdit) {
     return (
-      <main className="mx-auto w-full max-w-xl px-5 py-16">
-        <h1 className="font-display text-4xl font-bold">That URL is taken</h1>
+      <main className="mx-auto w-full min-w-0 max-w-xl px-5 py-8 sm:py-16">
+        <h1 className="break-all font-display text-3xl font-bold sm:text-4xl">
+          That URL is taken
+        </h1>
         <p className="mt-4 text-lg text-muted">
           /{username} already points to a calendar. Pick another username, or
           open this page with the secret edit link.
@@ -165,35 +167,38 @@ export function SetupForm({ username, initial, editKey, taken }: SetupFormProps)
   }
 
   return (
-    <main className="mx-auto w-full max-w-6xl px-5 py-10">
+    <main className="mx-auto w-full min-w-0 max-w-6xl px-5 py-8 sm:py-10">
       <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-brass">
         Creator setup
       </p>
-      <h1 data-testid="setup-heading" className="mt-2 font-display text-4xl font-bold">
+      <h1
+        data-testid="setup-heading"
+        className="mt-2 break-all font-display text-3xl font-bold sm:text-4xl"
+      >
         /{username}
       </h1>
-      <p className="mt-3 max-w-2xl text-lg text-muted">
+      <p className="mt-3 max-w-2xl text-base text-muted sm:text-lg">
         Blue days are open for bookings. Attach activities to those days, then
         share the URL.
       </p>
 
-      <div className="mt-8 grid gap-8 lg:grid-cols-[1.4fr_0.8fr]">
-        <section>
+      <div className="mt-8 grid min-w-0 gap-8 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,0.8fr)]">
+        <section className="min-w-0">
           <div className="mb-4 flex items-center justify-between gap-3">
-            <h2 className="font-display text-2xl font-semibold">
+            <h2 className="min-w-0 font-display text-xl font-semibold sm:text-2xl">
               {cursor.toFormat("LLLL yyyy")}
             </h2>
-            <div className="flex gap-2">
+            <div className="flex shrink-0 gap-2">
               <button
                 type="button"
-                className="border border-rule px-3 py-1 font-mono text-xs uppercase"
+                className="min-h-11 cursor-pointer border border-rule px-3 py-2 font-mono text-xs uppercase md:min-h-0 md:py-1"
                 onClick={() => setCursor((current) => current.minus({ months: 1 }))}
               >
                 Prev
               </button>
               <button
                 type="button"
-                className="border border-rule px-3 py-1 font-mono text-xs uppercase"
+                className="min-h-11 cursor-pointer border border-rule px-3 py-2 font-mono text-xs uppercase md:min-h-0 md:py-1"
                 onClick={() => setCursor((current) => current.plus({ months: 1 }))}
               >
                 Next
@@ -212,7 +217,7 @@ export function SetupForm({ username, initial, editKey, taken }: SetupFormProps)
           </p>
         </section>
 
-        <section className="space-y-6">
+        <section className="min-w-0 space-y-6">
           <label className="block">
             <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted">
               Display name
@@ -220,7 +225,7 @@ export function SetupForm({ username, initial, editKey, taken }: SetupFormProps)
             <input
               value={displayName}
               onChange={(event) => setDisplayName(event.target.value)}
-              className="mt-1 w-full border border-rule bg-closed px-3 py-2"
+              className="mt-1 w-full min-w-0 border border-rule bg-closed px-3 py-2.5 text-base"
             />
           </label>
           <label className="block">
@@ -232,7 +237,7 @@ export function SetupForm({ username, initial, editKey, taken }: SetupFormProps)
               onChange={(event) => setPhone(event.target.value)}
               placeholder="+44 7911 123456"
               autoComplete="tel"
-              className="mt-1 w-full border border-rule bg-closed px-3 py-2"
+              className="mt-1 w-full min-w-0 border border-rule bg-closed px-3 py-2.5 text-base"
             />
           </label>
           <label className="block">
@@ -242,7 +247,7 @@ export function SetupForm({ username, initial, editKey, taken }: SetupFormProps)
             <select
               value={timezone}
               onChange={(event) => setTimezone(event.target.value)}
-              className="mt-1 w-full border border-rule bg-closed px-3 py-2"
+              className="mt-1 w-full min-w-0 border border-rule bg-closed px-3 py-2.5 text-base"
             >
               {TIMEZONES.map((zone) => (
                 <option key={zone} value={zone}>
@@ -252,7 +257,7 @@ export function SetupForm({ username, initial, editKey, taken }: SetupFormProps)
             </select>
           </label>
           <div className="grid grid-cols-2 gap-3">
-            <label className="block">
+            <label className="block min-w-0">
               <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted">
                 Opens
               </span>
@@ -260,10 +265,10 @@ export function SetupForm({ username, initial, editKey, taken }: SetupFormProps)
                 type="time"
                 value={dayStart}
                 onChange={(event) => setDayStart(event.target.value)}
-                className="mt-1 w-full border border-rule bg-closed px-3 py-2 font-mono"
+                className="mt-1 w-full min-w-0 border border-rule bg-closed px-2 py-2.5 font-mono text-base sm:px-3"
               />
             </label>
-            <label className="block">
+            <label className="block min-w-0">
               <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted">
                 Closes
               </span>
@@ -271,17 +276,17 @@ export function SetupForm({ username, initial, editKey, taken }: SetupFormProps)
                 type="time"
                 value={dayEnd}
                 onChange={(event) => setDayEnd(event.target.value)}
-                className="mt-1 w-full border border-rule bg-closed px-3 py-2 font-mono"
+                className="mt-1 w-full min-w-0 border border-rule bg-closed px-2 py-2.5 font-mono text-base sm:px-3"
               />
             </label>
           </div>
 
           <div>
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="font-display text-2xl font-semibold">Items</h2>
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <h2 className="font-display text-xl font-semibold sm:text-2xl">Items</h2>
               <button
                 type="button"
-                className="border border-open px-3 py-1 text-sm text-open"
+                className="min-h-11 shrink-0 cursor-pointer border border-open px-3 py-2 text-sm text-open md:min-h-0 md:py-1"
                 onClick={() =>
                   setItems((current) => [
                     ...current,
@@ -300,7 +305,7 @@ export function SetupForm({ username, initial, editKey, taken }: SetupFormProps)
             <div className="space-y-4">
               {items.map((item) => (
                 <article key={item.clientId} className="border border-rule bg-closed p-3">
-                  <div className="flex gap-2">
+                  <div className="flex flex-col gap-2 sm:flex-row">
                     <input
                       aria-label="Item name"
                       placeholder="Dinner"
@@ -314,7 +319,7 @@ export function SetupForm({ username, initial, editKey, taken }: SetupFormProps)
                           ),
                         )
                       }
-                      className="w-full border border-rule bg-paper px-2 py-1"
+                      className="w-full min-w-0 border border-rule bg-paper px-3 py-2.5 text-base sm:px-2 sm:py-1"
                     />
                     <select
                       aria-label="Duration"
@@ -328,7 +333,7 @@ export function SetupForm({ username, initial, editKey, taken }: SetupFormProps)
                           ),
                         )
                       }
-                      className="border border-rule bg-paper px-2 py-1 font-mono"
+                      className="w-full min-w-0 border border-rule bg-paper px-3 py-2.5 font-mono text-base sm:w-auto sm:px-2 sm:py-1"
                     >
                       {DURATION_PRESETS.map((minutes) => (
                         <option key={minutes} value={minutes}>
@@ -364,7 +369,7 @@ export function SetupForm({ username, initial, editKey, taken }: SetupFormProps)
                               )
                             }
                             className={[
-                              "px-2 py-1 font-mono text-xs",
+                              "min-h-11 cursor-pointer px-3 py-2 font-mono text-xs md:min-h-0 md:px-2 md:py-1",
                               active ? "bg-open text-open-ink" : "border border-rule",
                             ].join(" ")}
                           >
@@ -385,7 +390,7 @@ export function SetupForm({ username, initial, editKey, taken }: SetupFormProps)
             type="button"
             onClick={() => void save()}
             disabled={saving}
-            className="w-full bg-open px-4 py-3 font-display text-lg font-semibold text-open-ink disabled:opacity-60"
+            className="min-h-12 w-full cursor-pointer bg-open px-4 py-3 font-display text-lg font-semibold text-open-ink disabled:opacity-60"
           >
             {saving ? "Saving…" : "Save calendar"}
           </button>

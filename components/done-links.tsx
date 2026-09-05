@@ -26,11 +26,13 @@ export function DoneLinks({ username }: { username: string }) {
   }
 
   return (
-    <main className="mx-auto w-full max-w-xl px-5 py-16">
+    <main className="mx-auto w-full min-w-0 max-w-xl px-5 py-8 sm:py-16">
       <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-brass">
         Ready to share
       </p>
-      <h1 className="mt-2 font-display text-4xl font-bold">/{username} is live</h1>
+      <h1 className="mt-2 break-all font-display text-3xl font-bold sm:text-4xl">
+        /{username} is live
+      </h1>
       <p className="mt-4 text-lg text-muted">
         Send the public URL to guests. Keep the edit link private — it is the
         only way back in.
@@ -46,7 +48,7 @@ export function DoneLinks({ username }: { username: string }) {
           </p>
           <button
             type="button"
-            className="mt-2 text-sm text-open"
+            className="mt-2 min-h-11 cursor-pointer py-2 text-sm text-open"
             onClick={() => void copy("public", publicUrl)}
           >
             {copied === "public" ? "Copied" : "Copy public URL"}
@@ -62,7 +64,7 @@ export function DoneLinks({ username }: { username: string }) {
           {key ? (
             <button
               type="button"
-              className="mt-2 text-sm text-open"
+              className="mt-2 min-h-11 cursor-pointer py-2 text-sm text-open"
               onClick={() => void copy("edit", editUrl)}
             >
               {copied === "edit" ? "Copied" : "Copy edit URL"}
@@ -73,7 +75,7 @@ export function DoneLinks({ username }: { username: string }) {
 
       <Link
         href={`/${username}`}
-        className="mt-10 inline-block bg-open px-5 py-3 font-display text-lg font-semibold text-open-ink"
+        className="mt-10 inline-block min-h-12 w-full cursor-pointer bg-open px-5 py-3 text-center font-display text-lg font-semibold text-open-ink sm:w-auto"
       >
         Open booking page
       </Link>

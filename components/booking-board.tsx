@@ -54,6 +54,7 @@ export function BookingBoard({ calendar }: BookingBoardProps) {
 
   const selectedItem = calendar.items.find((item) => item.id === selectedItemId);
   const sandboxHint = process.env.NEXT_PUBLIC_TWILIO_SANDBOX_HINT;
+  const hasSelection = Boolean(selectedItem && selectedDate);
 
   async function selectItem(date: string, itemId: string) {
     setSelectedDate(date);
@@ -119,11 +120,13 @@ export function BookingBoard({ calendar }: BookingBoardProps) {
 
   if (confirmation) {
     return (
-      <main className="mx-auto w-full max-w-xl px-5 py-16">
+      <main className="mx-auto w-full min-w-0 max-w-xl px-5 py-8 sm:py-16">
         <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-brass">
           Confirmed
         </p>
-        <h1 className="mt-2 font-display text-4xl font-bold">You are on the ledger</h1>
+        <h1 className="mt-2 font-display text-3xl font-bold sm:text-4xl">
+          You are on the ledger
+        </h1>
         <p className="mt-4 text-lg">
           {confirmation.itemName}
           <br />
@@ -140,7 +143,7 @@ export function BookingBoard({ calendar }: BookingBoardProps) {
         </p>
         <button
           type="button"
-          className="mt-8 border-b border-open text-open"
+          className="mt-8 min-h-11 cursor-pointer border-b border-open text-open"
           onClick={() => {
             const date = selectedDate;
             const itemId = selectedItemId;
@@ -160,13 +163,13 @@ export function BookingBoard({ calendar }: BookingBoardProps) {
   }
 
   return (
-    <main className="mx-auto w-full max-w-6xl px-5 py-10">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-        <div>
+    <main className="mx-auto w-full min-w-0 max-w-6xl px-5 py-8 sm:py-10">
+      <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div className="min-w-0">
           <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-brass">
             Booking page
           </p>
-          <h1 className="mt-2 font-display text-4xl font-bold">
+          <h1 className="mt-2 break-words font-display text-3xl font-bold sm:text-4xl">
             {calendar.displayName}
           </h1>
           <p className="mt-2 text-muted">
@@ -174,26 +177,26 @@ export function BookingBoard({ calendar }: BookingBoardProps) {
             buffer.
           </p>
         </div>
-        <p className="font-mono text-xs text-muted">/{calendar.username}</p>
+        <p className="break-all font-mono text-xs text-muted">/{calendar.username}</p>
       </div>
 
-      <div className="mt-8 grid gap-8 lg:grid-cols-[1.45fr_0.75fr]">
-        <section>
+      <div className="mt-8 grid min-w-0 gap-8 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,0.75fr)]">
+        <section className={`min-w-0 ${hasSelection ? "order-2 lg:order-none" : ""}`}>
           <div className="mb-4 flex items-center justify-between gap-3">
-            <h2 className="font-display text-2xl font-semibold">
+            <h2 className="min-w-0 font-display text-xl font-semibold sm:text-2xl">
               {cursor.toFormat("LLLL yyyy")}
             </h2>
-            <div className="flex gap-2">
+            <div className="flex shrink-0 gap-2">
               <button
                 type="button"
-                className="border border-rule px-3 py-1 font-mono text-xs uppercase"
+                className="min-h-11 cursor-pointer border border-rule px-3 py-2 font-mono text-xs uppercase md:min-h-0 md:py-1"
                 onClick={() => setCursor((current) => current.minus({ months: 1 }))}
               >
                 Prev
               </button>
               <button
                 type="button"
-                className="border border-rule px-3 py-1 font-mono text-xs uppercase"
+                className="min-h-11 cursor-pointer border border-rule px-3 py-2 font-mono text-xs uppercase md:min-h-0 md:py-1"
                 onClick={() => setCursor((current) => current.plus({ months: 1 }))}
               >
                 Next
@@ -214,7 +217,9 @@ export function BookingBoard({ calendar }: BookingBoardProps) {
           />
         </section>
 
-        <aside className="border border-rule bg-closed p-5">
+        <aside
+          className={`min-w-0 border border-rule bg-closed p-4 sm:p-5 ${hasSelection ? "order-1 lg:order-none" : ""}`}
+        >
           {!selectedItem || !selectedDate ? (
             <p className="text-muted">
               Choose an item on a blue day to see available times.
@@ -224,7 +229,7 @@ export function BookingBoard({ calendar }: BookingBoardProps) {
               <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-brass">
                 {DateTime.fromISO(selectedDate).toFormat("ccc d LLL")}
               </p>
-              <h2 className="mt-1 font-display text-2xl font-semibold">
+              <h2 className="mt-1 font-display text-xl font-semibold sm:text-2xl">
                 {selectedItem.name}
               </h2>
               <p className="font-mono text-sm text-muted">
@@ -248,7 +253,7 @@ export function BookingBoard({ calendar }: BookingBoardProps) {
                       data-testid={`slot-${slot.label}`}
                       onClick={() => setStartsAt(slot.startsAt)}
                       className={[
-                        "border px-2 py-2 font-mono text-sm",
+                        "min-h-11 cursor-pointer border px-2 py-2 font-mono text-sm",
                         startsAt === slot.startsAt
                           ? "border-open bg-open text-open-ink"
                           : "border-rule hover:border-open",
@@ -276,7 +281,7 @@ export function BookingBoard({ calendar }: BookingBoardProps) {
                       required
                       value={guestName}
                       onChange={(event) => setGuestName(event.target.value)}
-                      className="mt-1 w-full border border-rule bg-paper px-3 py-2"
+                      className="mt-1 w-full min-w-0 border border-rule bg-paper px-3 py-2.5 text-base"
                     />
                   </label>
                   <label className="block">
@@ -288,7 +293,7 @@ export function BookingBoard({ calendar }: BookingBoardProps) {
                       value={guestPhone}
                       onChange={(event) => setGuestPhone(event.target.value)}
                       placeholder="+44 7911 123456"
-                      className="mt-1 w-full border border-rule bg-paper px-3 py-2"
+                      className="mt-1 w-full min-w-0 border border-rule bg-paper px-3 py-2.5 text-base"
                     />
                   </label>
                   {sandboxHint ? (
@@ -303,7 +308,7 @@ export function BookingBoard({ calendar }: BookingBoardProps) {
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="w-full bg-open px-4 py-3 font-display text-lg font-semibold text-open-ink disabled:opacity-60"
+                    className="min-h-12 w-full cursor-pointer bg-open px-4 py-3 font-display text-lg font-semibold text-open-ink disabled:opacity-60"
                   >
                     {submitting ? "Booking…" : "Book slot"}
                   </button>

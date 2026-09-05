@@ -5,6 +5,22 @@ function whatsappAddress(e164: string): string {
   return e164.startsWith("whatsapp:") ? e164 : `whatsapp:${e164}`;
 }
 
+function createTwilioClient() {
+  const accountSid = process.env.TWILIO_ACCOUNT_SID;
+  const apiKey = process.env.TWILIO_API_KEY;
+  const apiSecret =
+    process.env.TWILIO_API_SECRET ?? process.env.TWILIO_AUTH_TOKEN;
+  const authToken = process.env.TWILIO_AUTH_TOKEN;
+
+  if (accountSid?.startsWith("AC") && apiKey?.startsWith("SK") && apiSecret) {
+    return twilio(apiKey, apiSecret, { accountSid });
+  }
+  if (accountSid?.startsWith("AC") && authToken) {
+    return twilio(accountSid, authToken);
+  }
+  return null;
+}
+
 export async function notifyBooking(input: {
   creatorPhone: string;
   creatorName: string;
@@ -17,10 +33,9 @@ export async function notifyBooking(input: {
   timezone: string;
   username: string;
 }): Promise<{ sent: boolean; error?: string }> {
-  const sid = process.env.TWILIO_ACCOUNT_SID;
-  const token = process.env.TWILIO_AUTH_TOKEN;
   const from = process.env.TWILIO_WHATSAPP_FROM;
-  if (!sid || !token || !from) {
+  const client = createTwilioClient();
+  if (!from || !client) {
     return { sent: false, error: "not_configured" };
   }
 
@@ -40,7 +55,6 @@ export async function notifyBooking(input: {
   ].join("\n");
 
   try {
-    const client = twilio(sid, token);
     await Promise.all([
       client.messages.create({
         from,

@@ -21,7 +21,7 @@ export function ClaimForm() {
   }
 
   return (
-    <form onSubmit={submit} className="mt-10 max-w-md">
+    <form onSubmit={submit} className="mt-8 w-full max-w-md sm:mt-10">
       <label className="block">
         <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted">
           Username
@@ -35,16 +35,16 @@ export function ClaimForm() {
           placeholder="alex"
           autoCapitalize="none"
           autoCorrect="off"
-          className="mt-2 w-full border border-rule bg-closed px-3 py-3 text-lg"
+          className="mt-2 w-full min-w-0 border border-rule bg-closed px-3 py-3 text-base sm:text-lg"
         />
       </label>
-      <p className="mt-2 font-mono text-sm text-muted">
+      <p className="mt-2 break-all font-mono text-sm text-muted">
         /{normalizeUsername(username) || "your-name"}
       </p>
       {error ? <p className="mt-2 text-sm text-open">{error}</p> : null}
       <button
         type="submit"
-        className="mt-6 bg-open px-5 py-3 font-display text-lg font-semibold text-open-ink"
+        className="mt-6 min-h-11 w-full cursor-pointer bg-open px-5 py-3 font-display text-lg font-semibold text-open-ink sm:w-auto"
       >
         Create calendar
       </button>

@@ -22,6 +22,7 @@ type MonthCalendarProps = {
 };
 
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const CELL_MIN_HEIGHT = "min-h-11 min-w-0 md:min-h-[7.5rem]";
 
 function monthCells(year: number, month: number) {
   const first = DateTime.local(year, month, 1);
@@ -56,18 +57,24 @@ export function MonthCalendar({
   }
 
   return (
-    <div className="select-none">
-      <div className="mb-2 grid grid-cols-7 gap-px font-mono text-[11px] uppercase tracking-[0.18em] text-muted">
+    <div className="w-full min-w-0 max-w-full select-none">
+      <div className="mb-2 grid grid-cols-7 gap-px font-mono text-[10px] uppercase tracking-[0.12em] text-muted sm:text-[11px] sm:tracking-[0.18em]">
         {WEEKDAYS.map((day) => (
-          <div key={day} className="px-1 py-1 text-center">
-            {day}
+          <div key={day} className="px-0.5 py-1 text-center sm:px-1">
+            <span className="sm:hidden">{day.slice(0, 1)}</span>
+            <span className="hidden sm:inline">{day}</span>
           </div>
         ))}
       </div>
-      <div className="grid grid-cols-7 gap-px border border-rule bg-rule">
+      <div className="grid w-full min-w-0 grid-cols-7 gap-px border border-rule bg-rule">
         {cells.map((cell, index) => {
           if (!cell) {
-            return <div key={`empty-${index}`} className="min-h-[7.5rem] bg-paper/70" />;
+            return (
+              <div
+                key={`empty-${index}`}
+                className={`${CELL_MIN_HEIGHT} bg-paper/70`}
+              />
+            );
           }
 
           const open = openDates.has(cell.iso);
@@ -84,7 +91,8 @@ export function MonthCalendar({
               data-date={cell.iso}
               data-testid={`day-${cell.iso}`}
               className={[
-                "min-h-[7.5rem] p-1.5 text-left",
+                CELL_MIN_HEIGHT,
+                "p-1 text-left md:p-1.5",
                 open ? "bg-open text-open-ink" : "bg-closed text-ink",
                 selected ? "ring-2 ring-inset ring-brass" : "",
                 mode === "setup" ? "cursor-pointer" : "",
@@ -110,7 +118,9 @@ export function MonthCalendar({
                 drag.current = null;
               }}
             >
-              <div className="font-mono text-xs">{String(cell.day).padStart(2, "0")}</div>
+              <div className="font-mono text-[10px] md:text-xs">
+                {String(cell.day).padStart(2, "0")}
+              </div>
               {mode === "book" && (
                 <div className="mt-1 flex flex-col gap-1">
                   {chips.map((chip) => {
@@ -123,14 +133,14 @@ export function MonthCalendar({
                         data-testid={`chip-${cell.iso}-${chip.name}`}
                         onClick={() => onSelectItem?.(cell.iso, chip.id)}
                         className={[
-                          "truncate rounded-sm px-1.5 py-0.5 text-left font-display text-[11px] font-semibold tracking-wide",
+                          "flex min-h-11 w-full min-w-0 cursor-pointer items-center overflow-hidden rounded-sm px-0.5 text-left font-display text-[10px] font-semibold leading-tight tracking-normal md:min-h-0 md:px-1.5 md:py-0.5 md:text-[11px] md:tracking-wide",
                           active
                             ? "bg-closed text-open"
                             : "bg-white/15 text-open-ink hover:bg-white/25",
                           !interactiveBook ? "opacity-50" : "",
                         ].join(" ")}
                       >
-                        {chip.name}
+                        <span className="min-w-0 break-all md:truncate">{chip.name}</span>
                       </button>
                     );
                   })}
