@@ -36,7 +36,8 @@ async function sendWhatsApp(
   }
 
   try {
-    const contentSid = input.contentSid?.trim();
+    const usingSandbox = from.includes("14155238886");
+    const contentSid = usingSandbox ? undefined : input.contentSid?.trim();
     await client.messages.create(
       contentSid
         ? {
