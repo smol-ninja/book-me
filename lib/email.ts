@@ -1,3 +1,4 @@
+import { buildBookingIcs } from "@/lib/ics";
 import { formatRange } from "@/lib/slots";
 
 function twilioBasicAuth(): string | null {
@@ -45,11 +46,18 @@ export function normalizeEmail(input: string): string | null {
   return value;
 }
 
+type EmailAttachment = {
+  filename: string;
+  contentType: string;
+  content: string;
+};
+
 async function sendEmail(input: {
   to: string;
   toName?: string;
   subject: string;
   text: string;
+  attachments?: EmailAttachment[];
 }): Promise<{ sent: boolean; error?: string }> {
   const from = process.env.TWILIO_EMAIL_FROM?.trim();
   const fromName = process.env.TWILIO_EMAIL_FROM_NAME?.trim() || "Book-me";
@@ -57,6 +65,14 @@ async function sendEmail(input: {
   if (!from || !auth) {
     return { sent: false, error: "not_configured" };
   }
+
+  const attachments = input.attachments?.length
+    ? input.attachments.map((file) => ({
+        filename: file.filename,
+        contentType: file.contentType,
+        content: Buffer.from(file.content, "utf8").toString("base64"),
+      }))
+    : undefined;
 
   try {
     const response = await fetch("https://comms.twilio.com/v1/Emails", {
@@ -72,6 +88,7 @@ async function sendEmail(input: {
           subject: input.subject,
           text: input.text,
           html: textToHtml(input.text),
+          attachments,
         },
       }),
     });
@@ -120,6 +137,7 @@ export async function notifyCalendarCreated(input: {
 }
 
 export async function notifyBooking(input: {
+  bookingId: string;
   creatorEmail: string;
   creatorName: string;
   guestName: string;
@@ -131,17 +149,22 @@ export async function notifyBooking(input: {
   endsAt: Date;
   timezone: string;
   username: string;
+  publicUrl?: string;
 }): Promise<{ sent: boolean; error?: string }> {
   if (!input.creatorEmail || !input.guestEmail) {
     return { sent: false, error: "not_configured" };
   }
   const when = formatRange(input.startsAt, input.endsAt, input.timezone);
   const item = `${input.itemName} (${input.durationMinutes} min)`;
+  const inviteNote =
+    "Open the attached invite.ics to add this to your calendar.";
   const guestBody = [
     "You're booked.",
     `Item: ${item}`,
     `When: ${when}`,
     `Host: ${input.creatorName}`,
+    "",
+    inviteNote,
   ].join("\n");
   const creatorBody = [
     `New booking on /${input.username}`,
@@ -150,7 +173,16 @@ export async function notifyBooking(input: {
     `Phone: ${input.guestPhone}`,
     `Item: ${item}`,
     `When: ${when}`,
+    "",
+    inviteNote,
   ].join("\n");
+  const attachments: EmailAttachment[] = [
+    {
+      filename: "invite.ics",
+      contentType: "text/calendar",
+      content: buildBookingIcs(input),
+    },
+  ];
 
   const [creator, guest] = await Promise.all([
     sendEmail({
@@ -158,12 +190,14 @@ export async function notifyBooking(input: {
       toName: input.creatorName,
       subject: `New booking on /${input.username}`,
       text: creatorBody,
+      attachments,
     }),
     sendEmail({
       to: input.guestEmail,
       toName: input.guestName,
       subject: `You're booked with ${input.creatorName}`,
       text: guestBody,
+      attachments,
     }),
   ]);
   if (creator.sent && guest.sent) {

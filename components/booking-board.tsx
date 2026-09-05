@@ -143,7 +143,7 @@ export function BookingBoard({ calendar }: BookingBoardProps) {
         </p>
         <p className="mt-4 text-muted">
           {confirmation.emailSent
-            ? "Email confirmations are on the way to you and the host."
+            ? "Email confirmations are on the way to you and the host, with a calendar invite attached."
             : "This slot is booked. The email may be delayed."}
         </p>
         <button

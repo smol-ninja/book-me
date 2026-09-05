@@ -1,13 +1,14 @@
 import { DateTime } from "luxon";
+import { appOrigin } from "@/lib/app-origin";
 import { HttpError } from "@/lib/calendar-service";
 import { editKeysMatch } from "@/lib/edit-key";
+import { notifyBooking, normalizeEmail } from "@/lib/email";
 import { toPublicCalendar } from "@/lib/mappers";
 import { toE164 } from "@/lib/phone";
 import { prisma } from "@/lib/prisma";
 import { dayBoundsUtc, generateSlotStarts } from "@/lib/slots";
 import { normalizeUsername } from "@/lib/username";
 import { bookInputSchema } from "@/lib/validation";
-import { notifyBooking, normalizeEmail } from "@/lib/email";
 
 export async function listSlots(username: string, date: string, itemId: string) {
   const calendar = await prisma.calendar.findUnique({
@@ -253,6 +254,7 @@ export async function createBooking(body: unknown) {
   });
 
   const emailed = await notifyBooking({
+    bookingId: result.booking.id,
     creatorEmail: result.calendar.email,
     creatorName: result.calendar.displayName,
     guestName: parsed.data.guestName,
@@ -264,6 +266,7 @@ export async function createBooking(body: unknown) {
     endsAt: result.booking.endsAt,
     timezone: result.calendar.timezone,
     username: result.calendar.username,
+    publicUrl: `${appOrigin()}/${result.calendar.username}`,
   });
 
   return {
