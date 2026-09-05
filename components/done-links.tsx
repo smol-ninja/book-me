@@ -42,13 +42,12 @@ export function DoneLinks({
       </p>
       {whatsapp === "1" ? (
         <p className="mt-3 text-muted">
-          Both URLs were also sent to your WhatsApp so you have a record.
+          Both URLs were also texted to your phone so you have a record.
         </p>
       ) : null}
       {whatsapp === "0" ? (
         <p className="mt-3 text-muted">
-          Copy both URLs now. WhatsApp delivery may be delayed until messaging
-          is fully enabled on the Twilio account.
+          Copy both URLs now. SMS delivery may be delayed.
         </p>
       ) : null}
 

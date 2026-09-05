@@ -53,7 +53,6 @@ export function BookingBoard({ calendar }: BookingBoardProps) {
   }, [calendar.items, openDates]);
 
   const selectedItem = calendar.items.find((item) => item.id === selectedItemId);
-  const sandboxHint = process.env.NEXT_PUBLIC_TWILIO_SANDBOX_HINT;
   const hasSelection = Boolean(selectedItem && selectedDate);
   const today = todayIso(calendar.timezone);
 
@@ -142,8 +141,8 @@ export function BookingBoard({ calendar }: BookingBoardProps) {
         </p>
         <p className="mt-4 text-muted">
           {confirmation.whatsappSent
-            ? "WhatsApp confirmations are on the way to you and the host."
-            : "This slot is booked. WhatsApp may be delayed."}
+            ? "Text confirmations are on the way to you and the host."
+            : "This slot is booked. The SMS may be delayed."}
         </p>
         <button
           type="button"
@@ -299,13 +298,9 @@ export function BookingBoard({ calendar }: BookingBoardProps) {
                       className="mt-1 w-full min-w-0 border border-rule bg-paper px-3 py-2.5 text-base"
                     />
                   </label>
-                  {sandboxHint ? (
-                    <p className="text-xs text-muted">{sandboxHint}</p>
-                  ) : (
-                    <p className="text-xs text-muted">
-                      We WhatsApp you and the host from Book-me&apos;s number.
-                    </p>
-                  )}
+                  <p className="text-xs text-muted">
+                    We text you and the host. No app signup needed.
+                  </p>
                   {formError ? <p className="text-sm text-accent">{formError}</p> : null}
                   <button
                     type="submit"

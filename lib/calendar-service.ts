@@ -40,7 +40,7 @@ function parseCalendarPayload(body: unknown): CalendarPayload {
   }
   const phone = toE164(parsed.data.phone);
   if (!phone) {
-    throw new HttpError("Enter a valid WhatsApp number with country code.", 400);
+    throw new HttpError("Enter a valid phone number with country code.", 400);
   }
   return {
     ...parsed.data,

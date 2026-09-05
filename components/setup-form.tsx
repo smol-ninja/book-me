@@ -249,7 +249,7 @@ export function SetupForm({ username, initial, editKey, taken }: SetupFormProps)
           </label>
           <label className="block">
             <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted">
-              WhatsApp number
+              Mobile number
             </span>
             <input
               value={phone}
@@ -258,6 +258,9 @@ export function SetupForm({ username, initial, editKey, taken }: SetupFormProps)
               autoComplete="tel"
               className="mt-1 w-full min-w-0 border border-rule bg-open px-3 py-2.5 text-base"
             />
+            <p className="mt-1 text-xs text-muted">
+              We text this number when someone books.
+            </p>
           </label>
           <label className="block">
             <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted">

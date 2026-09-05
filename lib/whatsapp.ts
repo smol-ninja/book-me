@@ -1,10 +1,6 @@
 import twilio from "twilio";
 import { formatRange } from "@/lib/slots";
 
-function whatsappAddress(e164: string): string {
-  return e164.startsWith("whatsapp:") ? e164 : `whatsapp:${e164}`;
-}
-
 function createTwilioClient() {
   const accountSid = process.env.TWILIO_ACCOUNT_SID;
   const apiKey = process.env.TWILIO_API_KEY;
@@ -21,40 +17,29 @@ function createTwilioClient() {
   return null;
 }
 
-async function sendWhatsApp(
+function e164(to: string): string {
+  return to.replace(/^whatsapp:/, "");
+}
+
+async function sendSms(
   to: string,
-  input: {
-    body: string;
-    contentSid?: string;
-    contentVariables?: Record<string, string>;
-  },
+  body: string,
 ): Promise<{ sent: boolean; error?: string }> {
-  const from = process.env.TWILIO_WHATSAPP_FROM;
+  const from = process.env.TWILIO_SMS_FROM;
   const client = createTwilioClient();
   if (!from || !client) {
     return { sent: false, error: "not_configured" };
   }
 
   try {
-    const usingSandbox = from.includes("14155238886");
-    const contentSid = usingSandbox ? undefined : input.contentSid?.trim();
-    await client.messages.create(
-      contentSid
-        ? {
-            from,
-            to: whatsappAddress(to),
-            contentSid,
-            contentVariables: JSON.stringify(input.contentVariables ?? {}),
-          }
-        : {
-            from,
-            to: whatsappAddress(to),
-            body: input.body,
-          },
-    );
+    await client.messages.create({
+      from,
+      to: e164(to),
+      body,
+    });
     return { sent: true };
   } catch (error) {
-    console.error("Twilio WhatsApp send failed", error);
+    console.error("Twilio SMS send failed", error);
     return { sent: false, error: "send_failed" };
   }
 }
@@ -81,15 +66,7 @@ export async function notifyCalendarCreated(input: {
   publicUrl: string;
   editUrl: string;
 }): Promise<{ sent: boolean; error?: string }> {
-  return sendWhatsApp(input.creatorPhone, {
-    body: calendarCreatedWhatsAppBody(input),
-    contentSid: process.env.TWILIO_WHATSAPP_CONTENT_SID_CALENDAR,
-    contentVariables: {
-      "1": input.username,
-      "2": input.publicUrl,
-      "3": input.editUrl,
-    },
-  });
+  return sendSms(input.creatorPhone, calendarCreatedWhatsAppBody(input));
 }
 
 export async function notifyBooking(input: {
@@ -121,26 +98,8 @@ export async function notifyBooking(input: {
   ].join("\n");
 
   const [creator, guest] = await Promise.all([
-    sendWhatsApp(input.creatorPhone, {
-      body: creatorBody,
-      contentSid: process.env.TWILIO_WHATSAPP_CONTENT_SID_BOOKING_HOST,
-      contentVariables: {
-        "1": input.username,
-        "2": input.guestName,
-        "3": input.guestPhone,
-        "4": item,
-        "5": when,
-      },
-    }),
-    sendWhatsApp(input.guestPhone, {
-      body: guestBody,
-      contentSid: process.env.TWILIO_WHATSAPP_CONTENT_SID_BOOKING_GUEST,
-      contentVariables: {
-        "1": item,
-        "2": input.creatorName,
-        "3": when,
-      },
-    }),
+    sendSms(input.creatorPhone, creatorBody),
+    sendSms(input.guestPhone, guestBody),
   ]);
   if (creator.sent && guest.sent) {
     return { sent: true };
